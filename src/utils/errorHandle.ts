@@ -8,7 +8,8 @@ const errorHandler = (e: Error, isFatal: boolean) => {
   const excludedErrors = [
     'Failed to construct \'Response\'',
   ]
-  console.error('FATAL_JS_ERROR:', e.name, e.message, e.stack)
+  // Note: Do NOT call console.error here as React Native redirects console.error to reportError, causing infinite recursion
+  console.log('FATAL_JS_ERROR:', e.name, e.message)
   if (isFatal) {
     if (excludedErrors.some((excludedError) => e.message.includes(excludedError))) {
       toast('应用遇到了错误，如果你有固定的复现方式，请截图并在 GitHub 反馈（并附上具体的操作步骤，以及“设置-错误日志”的内容）')
