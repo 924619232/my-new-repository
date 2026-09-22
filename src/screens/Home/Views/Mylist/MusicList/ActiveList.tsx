@@ -83,15 +83,16 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
           style={[
             styles.importBtn,
             {
-              backgroundColor: theme['c-primary-alpha-200'] || 'rgba(16, 185, 129, 0.15)',
-              borderColor: theme['c-primary'],
+              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+              borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.1)',
             },
           ]}
           onPress={() => global.app_event.showPlaylistImportModal()}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.importBtnText, { color: theme['c-primary-font-active'] || theme['c-primary'] }]}>
-            +导入歌单
+          <Icon name="download-2" size={13} color={theme['c-primary']} />
+          <Text style={[styles.importBtnText, { color: theme['c-font'] }]}>
+            导入歌单
           </Text>
         </TouchableOpacity>
       </View>
@@ -128,14 +129,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
+    gap: 4,
   },
   importBtnText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   iconBtn: {
     width: 32,

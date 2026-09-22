@@ -68,14 +68,12 @@ export const BottomTabBar: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 52,
-    backgroundColor: '#0a0d14',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
+    borderTopWidth: 0,
   },
   tabBtn: {
     flex: 1,
@@ -84,13 +82,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapper: {
-    height: 24,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabLabel: {
     fontSize: 11,
     marginTop: 2,
+    letterSpacing: 0.2,
   },
 })
 

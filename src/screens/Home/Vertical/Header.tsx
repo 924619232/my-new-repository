@@ -81,14 +81,20 @@ export default () => {
               onPress={handleBack}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Icon name="chevron-left" size={24} color="#e5e7eb" />
+              <Icon name="chevron-left" size={24} color={theme['c-font']} />
             </TouchableOpacity>
-            <View style={styles.searchField}>
-              <Icon name="search-2" size={15} color="#9ca3af" />
+            <View style={[
+              styles.searchField,
+              {
+                backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                borderColor: theme['c-border-background'],
+              },
+            ]}>
+              <Icon name="search-2" size={15} color={theme['c-font-label']} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: theme['c-font'] }]}
                 placeholder="搜索音乐、歌手、大碟..."
-                placeholderTextColor="#6b7280"
+                placeholderTextColor={theme['c-font-label']}
                 value={inputText}
                 onChangeText={handleTextChange}
                 onSubmitEditing={handleSubmitSearch}
@@ -97,12 +103,12 @@ export default () => {
               />
               {inputText ? (
                 <TouchableOpacity onPress={handleClear} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Icon name="close" size={13} color="#9ca3af" />
+                  <Icon name="close" size={13} color={theme['c-font-label']} />
                 </TouchableOpacity>
               ) : null}
             </View>
             <TouchableOpacity onPress={handleSubmitSearch} style={styles.searchSubmitBtn} activeOpacity={0.7}>
-              <Text style={styles.searchSubmitText}>搜索</Text>
+              <Text style={[styles.searchSubmitText, { color: theme['c-primary'] }]}>搜索</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -110,24 +116,21 @@ export default () => {
             <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>
               {titleMap[activeId] || 'CJY 音乐'}
             </Text>
-            {activeId === 'nav_songlist' || activeId === 'nav_top' ? (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={[styles.searchPill, { backgroundColor: theme['c-primary-input-background'] || 'rgba(255, 255, 255, 0.08)' }]}
-                onPress={handleSearchClick}
-              >
-                <Icon name="search-2" size={14} color={theme['c-font-label'] || '#9ca3af'} />
-                <Text style={[styles.searchPlaceholder, { color: theme['c-font-label'] || '#9ca3af' }]}>搜索音乐、歌手、大碟...</Text>
-              </TouchableOpacity>
-            ) : activeId === 'nav_love' ? (
+            {activeId !== 'nav_setting' ? (
               <View style={styles.rightActionRow}>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  style={styles.headerIconBtn}
+                  style={[
+                    styles.headerIconBtn,
+                    {
+                      backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                      borderColor: theme['c-border-background'],
+                    },
+                  ]}
                   onPress={handleSearchClick}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Icon name="search-2" size={20} color={theme['c-font'] || '#ffffff'} />
+                  <Icon name="search-2" size={17} color={theme['c-font'] || '#ffffff'} />
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -151,24 +154,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginRight: 14,
-  },
-  searchPill: {
-    flex: 1,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  searchPlaceholder: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginLeft: 6,
+    letterSpacing: 0.3,
   },
   searchHeaderRow: {
     flexDirection: 'row',
