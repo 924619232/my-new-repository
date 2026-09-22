@@ -1,0 +1,77 @@
+﻿name: Build & Deploy CJY Music APK
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -x test
+
+      - name: Verify Built APK
+        run: |
+          ls -lh android/app/build/outputs/apk/release/
+
+      - name: Upload Artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: lx-music-cjy-release
+          path: android/app/build/outputs/apk/release/*.apk
+
+      - name: Deploy APK to OpenList (China Mobile Cloud Drive)
+        env:
+          OPENLIST_URL: "https://pan.cjy.qzz.io"
+          OPENLIST_USER: "admin"
+          OPENLIST_PASS: "Chen924619232"
+        run: |
+          APK_PATH=$(ls android/app/build/outputs/apk/release/*.apk | head -n 1)
+          APK_NAME=$(basename "$APK_PATH")
+          echo "Logging into OpenList at $OPENLIST_URL..."
+          TOKEN=$(curl -s -X POST "$OPENLIST_URL/api/auth/login" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Mozilla/5.0" \
+            -d "{\"username\":\"$OPENLIST_USER\",\"password\":\"$OPENLIST_PASS\"}" | jq -r '.data.token')
+
+          if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+            echo "Login success. Uploading $APK_NAME to /移动云盘/apps/$APK_NAME..."
+            ENCODED_PATH=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/移动云盘/apps/' + '$APK_NAME'))")
+            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
+              -H "Authorization: $TOKEN" \
+              -H "File-Path: $ENCODED_PATH" \
+              -H "User-Agent: Mozilla/5.0" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$APK_PATH"
+            echo "Uploaded $APK_NAME successfully to China Mobile Cloud Drive /移动云盘/apps/!"
+          else
+            echo "OpenList login failed"
+          fi
