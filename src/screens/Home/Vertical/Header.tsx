@@ -113,27 +113,51 @@ export default () => {
           </View>
         ) : (
           <View style={styles.normalHeaderRow}>
-            <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>
-              {titleMap[activeId] || 'CJY 音乐'}
-            </Text>
-            {activeId !== 'nav_setting' ? (
-              <View style={styles.rightActionRow}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={[
-                    styles.headerIconBtn,
-                    {
-                      backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                      borderColor: theme['c-border-background'],
-                    },
-                  ]}
-                  onPress={handleSearchClick}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Icon name="search-2" size={17} color={theme['c-font'] || '#ffffff'} />
-                </TouchableOpacity>
-              </View>
-            ) : null}
+            {activeId === 'nav_songlist' || activeId === 'nav_top' ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[
+                  styles.searchCapsule,
+                  {
+                    backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                    borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                  },
+                ]}
+                onPress={handleSearchClick}
+              >
+                <Icon name="search-2" size={15} color={theme['c-primary']} />
+                <Text style={[styles.searchCapsulePlaceholder, { color: theme['c-font-label'] }]} numberOfLines={1}>
+                  搜索歌曲、歌手、专辑...
+                </Text>
+                <View style={[styles.searchCapsuleBadge, { backgroundColor: theme.isDark ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)' }]}>
+                  <Text style={[styles.searchCapsuleBadgeText, { color: theme['c-primary'] }]}>Hi-Res</Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>
+                  {titleMap[activeId] || 'CJY 音乐'}
+                </Text>
+                {activeId !== 'nav_setting' ? (
+                  <View style={styles.rightActionRow}>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={[
+                        styles.headerRoundBtn,
+                        {
+                          backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                          borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                        },
+                      ]}
+                      onPress={handleSearchClick}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon name="search-2" size={16} color={theme['c-font'] || '#ffffff'} />
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+              </>
+            )}
           </View>
         )}
       </View>
@@ -143,10 +167,10 @@ export default () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     justifyContent: 'center',
     zIndex: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   normalHeaderRow: {
     flexDirection: 'row',
@@ -157,6 +181,38 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 0.3,
+  },
+  searchCapsule: {
+    flex: 1,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  searchCapsulePlaceholder: {
+    flex: 1,
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  searchCapsuleBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 6,
+  },
+  searchCapsuleBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  headerRoundBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchHeaderRow: {
     flexDirection: 'row',
@@ -172,9 +228,9 @@ const styles = StyleSheet.create({
   },
   searchField: {
     flex: 1,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
@@ -195,19 +251,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   searchSubmitText: {
-    color: '#10b981',
     fontSize: 14,
     fontWeight: 'bold',
   },
   rightActionRow: {
     marginLeft: 'auto',
     flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerIconBtn: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
     alignItems: 'center',
   },
 })
