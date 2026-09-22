@@ -8,6 +8,7 @@ const errorHandler = (e: Error, isFatal: boolean) => {
   const excludedErrors = [
     'Failed to construct \'Response\'',
   ]
+  console.error('FATAL_JS_ERROR:', e.name, e.message, e.stack)
   if (isFatal) {
     if (excludedErrors.some((excludedError) => e.message.includes(excludedError))) {
       toast('应用遇到了错误，如果你有固定的复现方式，请截图并在 GitHub 反馈（并附上具体的操作步骤，以及“设置-错误日志”的内容）')
@@ -19,6 +20,9 @@ const errorHandler = (e: Error, isFatal: boolean) => {
 
   Error:
   ${isFatal ? 'Fatal:' : ''} ${e.name} ${e.message}
+
+  Stack:
+  ${(e.stack || '').split('\n').slice(0, 8).join('\n')}
   `,
         [{
           text: '关闭 (Close)',

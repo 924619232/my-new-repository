@@ -18,7 +18,15 @@ export default async(setting: LX.AppSetting) => {
     target.abort()
   }
   const sendScriptRequest = (requestKey: string, url: string, options: RequestParams['options']) => {
-    let req = fetchData(url, options)
+    let req = fetchData(url, options || {})
+    if (!req || !req.request) {
+      sendAction('response', {
+        error: 'Failed to create request',
+        requestKey,
+        response: null,
+      })
+      return
+    }
     req.request.then(response => {
       // console.log(response)
       sendAction('response', {

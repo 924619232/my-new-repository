@@ -27,6 +27,9 @@ const throttleSaveSetting = throttle(() => {
  */
 export const initSetting = async() => {
   const setting = (await initAppSetting()).setting
+  if (setting['common.apiSource'] === 'cjy_v350_builtin') {
+    setting['common.apiSource'] = 'user_api_cjy_v350'
+  }
   settingActions.updateSetting(setting)
   return setting
 }

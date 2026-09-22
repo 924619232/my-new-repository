@@ -18,7 +18,13 @@ const defaultHeaders = {
  * @param {*} options
  */
 export const httpFetch = (url, options = { method: 'get' }) => {
-  const requestObj = fetchData(url, options)
+  const requestObj = fetchData(url, options || { method: 'get' })
+  if (!requestObj || !requestObj.request) {
+    return {
+      promise: Promise.reject(new Error('Invalid request object')),
+      cancelHttp() {},
+    }
+  }
   return {
     promise: requestObj.request.catch(err => {
       console.log('出错', err.message)
@@ -34,7 +40,7 @@ export const httpFetch = (url, options = { method: 'get' }) => {
       }
     }),
     cancelHttp() {
-      requestObj.abort()
+      if (requestObj && typeof requestObj.abort === 'function') requestObj.abort()
     },
   }
 }
@@ -51,7 +57,11 @@ export const httpGet = (url, options, callback) => {
     callback = options
     options = {}
   }
-  const requestObj = fetchData(url, { ...options, method: 'get' })
+  const requestObj = fetchData(url, { ...(options || {}), method: 'get' })
+  if (!requestObj || !requestObj.request) {
+    if (callback) callback(new Error('Invalid request object'), null, null)
+    return () => {}
+  }
   requestObj.request.then(resp => {
     callback(null, resp, resp.body)
   }).catch(err => {
@@ -60,7 +70,7 @@ export const httpGet = (url, options, callback) => {
   })
 
   return () => {
-    requestObj.abort()
+    if (requestObj && typeof requestObj.abort === 'function') requestObj.abort()
   }
 }
 
@@ -166,7 +176,8 @@ const blobToBuffer = (blob) => {
   })
 }
 
-const fetchData = (url, { timeout = 15000, ...options }) => {
+const fetchData = (url, options = {}) => {
+  const { timeout = 15000, ...restOptions } = options || {}
   console.log('---start---', url)
 
   const controller = new global.AbortController()
@@ -176,11 +187,11 @@ const fetchData = (url, { timeout = 15000, ...options }) => {
   }, timeout)
 
   return {
-    request: handleRequestData(url, options).then(options => {
+    request: handleRequestData(url, restOptions).then(opts => {
       return global.fetch(url, {
-        ...options,
+        ...opts,
         signal: controller.signal,
-      }).then(resp => (options.binary ? resp.blob() : resp.text()).then(text => {
+      }).then(resp => (opts.binary ? resp.blob() : resp.text()).then(text => {
         // console.log(options, headers, text)
         return {
           headers: resp.headers.map,
@@ -191,7 +202,7 @@ const fetchData = (url, { timeout = 15000, ...options }) => {
           ok: resp.ok,
         }
       })).then(resp => {
-        if (options.binary) {
+        if (opts.binary) {
           return blobToBuffer(resp.body).then(buffer => {
             resp.body = buffer
             return resp
@@ -217,7 +228,9 @@ const fetchData = (url, { timeout = 15000, ...options }) => {
 }
 
 export const checkUrl = async(url, options = {}) => {
-  return fetchData(url, { method: 'head', ...options }).request.then(resp => {
+  const reqObj = fetchData(url, { method: 'head', ...(options || {}) })
+  if (!reqObj || !reqObj.request) return Promise.reject(new Error('Invalid request object'))
+  return reqObj.request.then(resp => {
     if (resp.statusCode === 200) {
       return Promise.resolve()
     } else {

@@ -17,6 +17,7 @@ export const setApiSource = (apiId: string) => {
       }
     })
   }
+  if (apiId === 'cjy_v350_builtin') apiId = 'user_api_cjy_v350'
   if (/^user_api/.test(apiId)) {
     setUserApi(apiId).catch(err => {
       if (!global.lx.apiInitPromise[1]) global.lx.apiInitPromise[2](false)

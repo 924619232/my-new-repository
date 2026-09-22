@@ -1,16 +1,20 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
+import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
+import { togglePlay, playNext } from '@/core/player'
+import { navigations } from '@/navigation'
+import commonState from '@/store/common/state'
 
 export interface FloatingMiniPlayerProps {
   title?: string
   artist?: string
   picUrl?: string
-  isPlaying: boolean
-  onTogglePlay: () => void
-  onNext: () => void
-  onPrev: () => void
-  onOpenDetail: () => void
+  isPlaying?: boolean
+  onTogglePlay?: () => void
+  onNext?: () => void
+  onPrev?: () => void
+  onOpenDetail?: () => void
 }
 
 export const FloatingMiniPlayer: React.FC<FloatingMiniPlayerProps> = ({
@@ -20,18 +24,35 @@ export const FloatingMiniPlayer: React.FC<FloatingMiniPlayerProps> = ({
   isPlaying,
   onTogglePlay,
   onNext,
-  onPrev,
   onOpenDetail,
 }) => {
   const theme = useTheme()
+  const liveMusicInfo = usePlayerMusicInfo()
+  const liveIsPlaying = useIsPlay()
+
+  const currentTitle = title || liveMusicInfo.name || 'CJY 臻品音频'
+  const currentArtist = artist || liveMusicInfo.singer || '国内秒播直解'
+  const currentPic = picUrl || liveMusicInfo.pic
+  const currentPlaying = isPlaying !== undefined ? isPlaying : liveIsPlaying
+
+  const handleTogglePlay = onTogglePlay || (() => togglePlay())
+  const handleNext = onNext || (() => playNext())
+  const handleOpenDetail = onOpenDetail || (() => {
+    if (commonState.componentIds.home) {
+      navigations.pushPlayDetailScreen(commonState.componentIds.home)
+    }
+  })
+
+  // 如果没有播放歌曲，隐蔽浮窗以保持主屏清爽
+  if (!liveMusicInfo.id && !title) return null
 
   return (
     <View style={styles.floatingWrapper}>
-      <TouchableOpacity activeOpacity={0.9} style={styles.capsule} onPress={onOpenDetail}>
+      <TouchableOpacity activeOpacity={0.9} style={styles.capsule} onPress={handleOpenDetail}>
         {/* Cover Thumbnail */}
         <View style={styles.coverWrapper}>
-          {picUrl ? (
-            <Image source={{ uri: picUrl }} style={styles.coverImg} />
+          {currentPic ? (
+            <Image source={{ uri: currentPic }} style={styles.coverImg} />
           ) : (
             <View style={styles.fallbackCover} />
           )}
@@ -39,16 +60,16 @@ export const FloatingMiniPlayer: React.FC<FloatingMiniPlayerProps> = ({
 
         {/* Info */}
         <View style={styles.infoWrapper}>
-          <Text numberOfLines={1} style={styles.titleText}>{title || '臻品无损音频'}</Text>
-          <Text numberOfLines={1} style={styles.artistText}>{artist || '高保真直连'}</Text>
+          <Text numberOfLines={1} style={styles.titleText}>{currentTitle}</Text>
+          <Text numberOfLines={1} style={styles.artistText}>{currentArtist}</Text>
         </View>
 
         {/* Controls */}
         <View style={styles.controlsRow}>
-          <TouchableOpacity onPress={onTogglePlay} style={styles.controlBtn}>
-            <Text style={styles.playIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+          <TouchableOpacity onPress={handleTogglePlay} style={styles.controlBtn}>
+            <Text style={styles.playIcon}>{currentPlaying ? '⏸' : '▶'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onNext} style={styles.controlBtn}>
+          <TouchableOpacity onPress={handleNext} style={styles.controlBtn}>
             <Text style={styles.nextIcon}>⏭</Text>
           </TouchableOpacity>
         </View>

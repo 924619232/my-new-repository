@@ -504,7 +504,7 @@ export const removeSyncHostHistory = async(index: number) => {
 }
 
 export const BUILTIN_CJY_API: LX.UserApi.UserApiInfo = {
-  id: 'cjy_v350_builtin',
+  id: 'user_api_cjy_v350',
   name: 'CJY 臻品无损音源 (国内秒播)',
   description: '全平台国内直出 · 客户端原唱直解 · 200ms秒播',
   author: 'CJY Audio Labs',
@@ -516,6 +516,9 @@ export const BUILTIN_CJY_API: LX.UserApi.UserApiInfo = {
 let userApis: LX.UserApi.UserApiInfo[] = []
 export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
   userApis = await getData<LX.UserApi.UserApiInfo[]>(userApiPrefix) ?? []
+
+  // 清除旧的 cjy_v350_builtin 遗留
+  userApis = userApis.filter(api => api.id !== 'cjy_v350_builtin')
 
   // 始终确保内置 CJY 官方秒播源在列表中首位
   if (!userApis.some(api => api.id === BUILTIN_CJY_API.id)) {
@@ -536,7 +539,7 @@ export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
   return [...userApis]
 }
 export const getUserApiScript = async(id: string): Promise<string> => {
-  if (id === BUILTIN_CJY_API.id) {
+  if (id === BUILTIN_CJY_API.id || id === 'cjy_v350_builtin') {
     const cached = await getData<string>(`${userApiPrefix}${id}`)
     if (cached && cached.length > 50) return cached
     return builtinSourceScript

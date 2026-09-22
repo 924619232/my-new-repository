@@ -2,7 +2,7 @@ const defaultSetting: LX.AppSetting = {
   version: '2.0',
   'common.isAutoTheme': false,
   'common.langId': null,
-  'common.apiSource': 'cjy_v350_builtin',
+  'common.apiSource': 'user_api_cjy_v350',
   'common.sourceNameType': 'alias',
   'common.shareType': 'system',
   'common.isAgreePact': true,

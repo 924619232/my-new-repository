@@ -71,8 +71,9 @@ const blobToBuffer = (blob) => {
   })
 }
 
-export const fetchData = (url, { timeout = 13_000, ...options }) => {
+export const fetchData = (url, options = {}) => {
   // console.log('---start---', url)
+  const { timeout = 13_000, ...restOptions } = options || {}
 
   const controller = new global.AbortController()
   let id = BackgroundTimer.setTimeout(() => {
@@ -81,11 +82,11 @@ export const fetchData = (url, { timeout = 13_000, ...options }) => {
   }, timeout)
 
   return {
-    request: handleRequestData(options).then(options => {
+    request: handleRequestData(restOptions).then(opts => {
       return global.fetch(url, {
-        ...options,
+        ...opts,
         signal: controller.signal,
-      }).then(resp => (options.binary ? resp.blob() : resp.text()).then(text => {
+      }).then(resp => (opts.binary ? resp.blob() : resp.text()).then(text => {
         // console.log(options, headers, text)
         return {
           headers: resp.headers.map,
