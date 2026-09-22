@@ -32,8 +32,8 @@ export const BottomTabBar: React.FC = () => {
       style={[
         styles.container,
         {
-          backgroundColor: theme['c-main-background'],
-          borderTopColor: theme['c-border-background'],
+          backgroundColor: 'transparent',
+          borderTopColor: 'transparent',
         },
       ]}
     >

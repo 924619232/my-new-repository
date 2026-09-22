@@ -61,7 +61,7 @@ export default ({ children }: Props) => {
           resizeMode="cover"
           blurRadius={BLUR_RADIUS}
         >
-          <View style={{ flex: 1, flexDirection: 'column', backgroundColor: theme['c-content-background'], opacity: 0.76 }}></View>
+          <View style={{ flex: 1, flexDirection: 'column', backgroundColor: theme['c-content-background'], opacity: 0.85 }}></View>
         </ImageBackground>
         <View style={{ flex: 1, flexDirection: 'column' }}>
           {children}

@@ -69,8 +69,7 @@ export default () => {
           {
             height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
             paddingTop: statusBarHeight,
-            backgroundColor: theme['c-main-background'],
-            borderBottomColor: theme['c-border-background'],
+            backgroundColor: isSearchMode ? theme['c-main-background'] : 'transparent',
           },
         ]}
       >
@@ -170,7 +169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     justifyContent: 'center',
     zIndex: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
   },
   normalHeaderRow: {
     flexDirection: 'row',
