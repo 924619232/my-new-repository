@@ -90,7 +90,7 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
           onPress={() => global.app_event.showDownloadModal()}
           activeOpacity={0.7}
         >
-          <Icon name="download" size={13} color={theme['c-primary']} />
+          <Icon name="download-2" size={13} color={theme['c-primary']} />
           <Text style={[styles.importBtnText, { color: theme['c-font'] }]}>
             下载管理
           </Text>

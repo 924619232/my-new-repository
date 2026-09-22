@@ -241,7 +241,7 @@ export default forwardRef<DownloadModalType, DownloadModalProps>((props, ref) =>
           ) : (
             completedTasks.length === 0 ? (
               <View style={styles.emptyView}>
-                <Icon name="music" size={42} color={theme['c-font-label']} />
+                <Icon name="album" size={42} color={theme['c-font-label']} />
                 <Text style={[styles.emptyTitle, { color: theme['c-font'] }]}>暂无已完成的离线歌曲</Text>
                 <Text style={[styles.emptySubtitle, { color: theme['c-font-label'] }]}>
                   下载完成后的歌曲将保存在本地并自动同步至「📥 离线下载」歌单
@@ -287,7 +287,7 @@ export default forwardRef<DownloadModalType, DownloadModalProps>((props, ref) =>
                       style={[styles.actionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
                       onPress={() => handleDeleteCompleted(task)}
                     >
-                      <Icon name="trash-can-outline" size={16} color="#ff4d4f" />
+                      <Icon name="remove" size={16} color="#ff4d4f" />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -313,7 +313,7 @@ export default forwardRef<DownloadModalType, DownloadModalProps>((props, ref) =>
               style={[styles.footerBtnHighlight, { backgroundColor: theme['c-primary'] }]}
               onPress={handleGoToOfflineList}
             >
-              <Icon name="playlist-music" size={14} color="#fff" />
+              <Icon name="album" size={14} color="#fff" />
               <Text style={styles.footerBtnHighlightText}>打开离线歌单</Text>
             </TouchableOpacity>
           </View>

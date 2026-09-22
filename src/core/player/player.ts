@@ -60,8 +60,9 @@ const { addDelayNextTimeout, clearDelayNextTimeout } = createDelayNextTimeout(50
 const { addDelayNextTimeout: addLoadTimeout, clearDelayNextTimeout: clearLoadTimeout } = createDelayNextTimeout(100000)
 
 const createGettingUrlId = (musicInfo: LX.Music.MusicInfo | LX.Download.ListItem) => {
-  const tInfo = 'progress' in musicInfo ? musicInfo.metadata.musicInfo.meta.toggleMusicInfo : musicInfo.meta.toggleMusicInfo
-  return `${musicInfo.id}_${tInfo?.id ?? ''}`
+  const mInfo: any = 'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo
+  const tInfo = mInfo?.meta?.toggleMusicInfo
+  return `${musicInfo?.id ?? ''}_${tInfo?.id ?? ''}`
 }
 /**
  * 检查音乐信息是否已更改
@@ -99,7 +100,8 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
   addLoadTimeout()
 
   // const type = getPlayType(settingState.setting['player.isPlayHighQuality'], musicInfo)
-  let toggleMusicInfo = ('progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo).meta.toggleMusicInfo
+  const mInfo: any = 'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo
+  let toggleMusicInfo = mInfo?.meta?.toggleMusicInfo
 
   return (toggleMusicInfo ? getMusicUrl({
     musicInfo: toggleMusicInfo,
