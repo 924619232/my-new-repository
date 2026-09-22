@@ -6,6 +6,24 @@ const { createThemeColors } = require('./utils')
 
 const defaultThemes = [
   {
+    id: 'obsidian_glass',
+    name: '黑曜石拟态',
+    isDark: true,
+    config: {
+      primary: 'rgb(16, 185, 129)',
+      font: 'rgb(243, 244, 246)',
+      'c-app-background': 'rgba(9, 10, 15, 0.98)',
+      'c-main-background': 'rgba(18, 22, 32, 0.92)',
+      'bg-image': '',
+      'bg-image-position': 'center',
+      'bg-image-size': 'cover',
+
+      'c-badge-primary': 'var(c-primary)',
+      'c-badge-secondary': '#10b981',
+      'c-badge-tertiary': '#34d399',
+    },
+  },
+  {
     id: 'green',
     name: '绿意盎然',
     isDark: false,

@@ -8,6 +8,7 @@ import Horizontal from './Horizontal'
 import { navigations } from '@/navigation'
 import settingState from '@/store/setting/state'
 import ClipboardSnifferModal from '@/components/ClipboardSnifferModal'
+import PlaylistImportModal from '@/components/PlaylistImportModal'
 import FloatingMiniPlayer from '@/components/FloatingMiniPlayer'
 
 
@@ -36,6 +37,7 @@ export default ({ componentId }: Props) => {
           : <Vertical />
       }
       <ClipboardSnifferModal />
+      <PlaylistImportModal />
       <FloatingMiniPlayer />
     </PageContent>
   )

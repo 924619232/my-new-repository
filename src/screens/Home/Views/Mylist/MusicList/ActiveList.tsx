@@ -63,6 +63,9 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
       <Icon style={styles.currentListIcon} color={theme['c-button-font']} name="chevron-right" size={12} />
       { fetching ? <Loading color={theme['c-button-font']} style={styles.loading} /> : null }
       <Text style={styles.currentListText} numberOfLines={1} color={theme['c-button-font']}>{currentListName}</Text>
+      <TouchableOpacity style={styles.currentListBtns} onPress={() => global.app_event.showPlaylistImportModal()}>
+        <Text size={12} color="#10b981" style={{ fontWeight: 'bold', paddingHorizontal: 6 }}>+导入</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.currentListBtns} onPress={onShowSearchBar}>
         <Icon color={theme['c-button-font']} name="search-2" />
       </TouchableOpacity>

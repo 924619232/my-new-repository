@@ -8,7 +8,7 @@ import { isUrl } from '@/utils'
 import { privateStorageDirectoryPath } from '@/utils/fs'
 import { type ImageSourcePropType } from 'react-native'
 
-export const themes = [obsidianGlassTheme, ...rawThemes]
+export const themes = [obsidianGlassTheme, ...rawThemes.filter(t => t.id !== 'obsidian_glass')]
 
 export const BG_IMAGES = {
   'china_ink.jpg': require('./images/china_ink.jpg') as ImageSourcePropType,
@@ -120,18 +120,14 @@ export const getTheme = async() => {
   //     : settingState.setting['theme.lightId']
   //   // : 'china_ink'
   //   : settingState.setting['theme.id']
-  let themeId = settingState.setting['common.isAutoTheme'] && shouldUseDarkColors
-    ? 'black'
-    : settingState.setting['theme.id']
-  // themeId = 'naruto'
-  // themeId = 'pink'
-  // themeId = 'black'
+  let themeId = settingState.setting['theme.id']
+  if (!themeId || themeId === 'green') themeId = 'obsidian_glass'
   let theme: LocalTheme | LX.Theme | undefined = themes.find(theme => theme.id == themeId)
   if (!theme) {
     userThemes = await getUserTheme()
     theme = userThemes.find(theme => theme.id == themeId)
     if (!theme) {
-      themeId = settingState.setting['theme.id'] == 'auto' && shouldUseDarkColors ? 'black' : 'green'
+      themeId = 'obsidian_glass'
       theme = themes.find(theme => theme.id == themeId) as LX.Theme
     }
   }

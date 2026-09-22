@@ -201,6 +201,10 @@ export class AppEvent extends Event {
   selectSyncMode(mode: LX.Sync.ModeType) {
     this.emit('selectSyncMode', mode)
   }
+
+  showPlaylistImportModal() {
+    this.emit('showPlaylistImportModal')
+  }
 }
 
 

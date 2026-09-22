@@ -13,6 +13,7 @@ import commonState from '@/store/common/state'
 import CommentBtn from './CommentBtn'
 import Btn from './Btn'
 import SettingPopup, { type SettingPopupType } from '../../components/SettingPopup'
+import DspModal, { type DspModalType } from '../../components/DspModal'
 import DesktopLyricBtn from './DesktopLyricBtn'
 
 export const HEADER_HEIGHT = scaleSizeH(_HEADER_HEIGHT)
@@ -32,12 +33,16 @@ const Title = () => {
 
 export default memo(() => {
   const popupRef = useRef<SettingPopupType>(null)
+  const dspModalRef = useRef<DspModalType>(null)
 
   const back = () => {
     void pop(commonState.componentIds.playDetail!)
   }
   const showSetting = () => {
     popupRef.current?.show()
+  }
+  const showDsp = () => {
+    dspModalRef.current?.show()
   }
 
   return (
@@ -49,9 +54,10 @@ export default memo(() => {
         <Title />
         <DesktopLyricBtn />
         <CommentBtn />
-        <Btn icon="slider" onPress={showSetting} />
+        <Btn icon="slider" onPress={showDsp} />
       </View>
       <SettingPopup ref={popupRef} position="left" direction="horizontal" />
+      <DspModal ref={dspModalRef} />
     </View>
   )
 })

@@ -11,6 +11,7 @@ import { scaleSizeH } from '@/utils/pixelRatio'
 import { HEADER_HEIGHT as _HEADER_HEIGHT, NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import commonState from '@/store/common/state'
 import SettingPopup, { type SettingPopupType } from '../../components/SettingPopup'
+import DspModal, { type DspModalType } from '../../components/DspModal'
 import { useStatusbarHeight } from '@/store/common/hook'
 import Btn from './Btn'
 import TimeoutExitBtn from './TimeoutExitBtn'
@@ -33,6 +34,7 @@ const Title = () => {
 
 export default memo(() => {
   const popupRef = useRef<SettingPopupType>(null)
+  const dspModalRef = useRef<DspModalType>(null)
   const statusBarHeight = useStatusbarHeight()
 
   const back = () => {
@@ -40,6 +42,9 @@ export default memo(() => {
   }
   const showSetting = () => {
     popupRef.current?.show()
+  }
+  const showDsp = () => {
+    dspModalRef.current?.show()
   }
 
   return (
@@ -49,9 +54,11 @@ export default memo(() => {
         <Btn icon="chevron-left" onPress={back} />
         <Title />
         <TimeoutExitBtn />
-        <Btn icon="slider" onPress={showSetting} />
+        <Btn icon="slider" onPress={showDsp} onLongPress={showSetting} />
+        <Btn icon="menu" onPress={showSetting} />
       </View>
       <SettingPopup ref={popupRef} direction="vertical" />
+      <DspModal ref={dspModalRef} />
     </View>
   )
 })
