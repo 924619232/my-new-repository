@@ -205,6 +205,10 @@ export class AppEvent extends Event {
   showPlaylistImportModal() {
     this.emit('showPlaylistImportModal')
   }
+
+  showPlayQueueModal() {
+    this.emit('showPlayQueueModal')
+  }
 }
 
 

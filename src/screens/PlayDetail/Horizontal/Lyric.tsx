@@ -285,8 +285,9 @@ export default () => {
         initialNumToRender={Math.max(line + 10, 10)}
         onScrollToIndexFailed={handleScrollToIndexFailed}
         onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
-      { isShowLyricProgressSetting ? <PlayLine ref={playLineRef} onPlayLine={handlePlayLine} /> : null }
+      { (isShowLyricProgressSetting ?? true) ? <PlayLine ref={playLineRef} onPlayLine={handlePlayLine} /> : null }
     </>
   )
 }

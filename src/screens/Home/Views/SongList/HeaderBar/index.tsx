@@ -14,7 +14,6 @@ import SourceSelector, {
 import { type Source } from '@/store/songlist/state'
 // import { useTheme } from '@/store/theme/hook'
 import Tag, { type TagType, type TagProps } from './Tag'
-import OpenList, { type OpenListType } from './OpenList'
 // import { BorderWidths } from '@/theme'
 
 export interface HeaderBarProps {
@@ -34,7 +33,6 @@ import Text from '@/components/common/Text'
 export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSortChange, onTagChange, onSourceChange }, ref) => {
   const sortTabRef = useRef<SortTabType>(null)
   const tagRef = useRef<TagType>(null)
-  const openListRef = useRef<OpenListType>(null)
   const sourceSelectorRef = useRef<SourceSelectorType>(null)
   // const theme = useTheme()
 
@@ -43,7 +41,6 @@ export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSortChange, onTagC
       sortTabRef.current?.setSource(source, sortId)
       tagRef.current?.setSelectedTagInfo(source, tagName, tagId)
       sourceSelectorRef.current?.setSource(source)
-      openListRef.current?.setInfo(source)
     },
   }), [])
 
@@ -52,12 +49,11 @@ export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSortChange, onTagC
     <View style={styles.searchBar}>
       <SortTab ref={sortTabRef} onSortChange={onSortChange} />
       <Tag ref={tagRef} onTagChange={onTagChange} />
-      <OpenList ref={openListRef} />
       <TouchableOpacity
         style={styles.importBtn}
         onPress={() => global.app_event.showPlaylistImportModal()}
       >
-        <Text size={12} color="#10b981" style={{ fontWeight: 'bold' }}>+导入</Text>
+        <Text size={12} color="#10b981" style={{ fontWeight: 'bold' }}>+导入歌单</Text>
       </TouchableOpacity>
       <SourceSelector ref={sourceSelectorRef} onSourceChange={onSourceChange} />
     </View>

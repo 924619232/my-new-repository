@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Icon } from '@/components/common/Icon'
 import Text from '@/components/common/Text'
 import { useNavActiveId } from '@/store/common/hook'
+import { useTheme } from '@/store/theme/hook'
 import { setNavActiveId } from '@/core/common'
 
 interface TabItem {
@@ -20,13 +21,22 @@ const TABS: TabItem[] = [
 
 export const BottomTabBar: React.FC = () => {
   const activeId = useNavActiveId()
+  const theme = useTheme()
 
   const handleTabPress = (id: TabItem['id']) => {
     setNavActiveId(id)
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme['c-main-background'] || 'rgba(18, 22, 32, 0.95)',
+          borderTopColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+        },
+      ]}
+    >
       {TABS.map(tab => {
         const isActive = activeId === tab.id
         const color = isActive ? '#10b981' : '#6b7280'

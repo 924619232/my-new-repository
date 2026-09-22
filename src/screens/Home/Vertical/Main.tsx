@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
-import { View } from 'react-native'
+import { View, BackHandler, StyleSheet } from 'react-native'
 import Search from '../Views/Search'
 import SongList from '../Views/SongList'
 import Mylist from '../Views/Mylist'
@@ -10,6 +10,8 @@ import { createStyle } from '@/utils/tools'
 import PagerView, { type PageScrollStateChangedNativeEvent, type PagerViewOnPageSelectedEvent } from 'react-native-pager-view'
 import { setNavActiveId } from '@/core/common'
 import settingState from '@/store/setting/state'
+import { useNavActiveId } from '@/store/common/hook'
+import { useTheme } from '@/store/theme/hook'
 
 const hideKeys = [
   'list.isShowAlbumName',
@@ -178,15 +180,13 @@ const SettingPage = () => {
   return visible ? component : null
 }
 
-const viewMap = {
-  nav_search: 0,
-  nav_songlist: 1,
-  nav_top: 2,
-  nav_love: 3,
-  nav_setting: 4,
+const viewMap: Record<string, number> = {
+  nav_songlist: 0,
+  nav_top: 1,
+  nav_love: 2,
+  nav_setting: 3,
 }
 const indexMap = [
-  'nav_search',
   'nav_songlist',
   'nav_top',
   'nav_love',
@@ -194,59 +194,47 @@ const indexMap = [
 ] as const
 
 const Main = () => {
+  const activeNavId = useNavActiveId()
+  const theme = useTheme()
+  const previousTabRef = useRef<string>('nav_songlist')
   const pagerViewRef = useRef<ComponentRef<typeof PagerView>>(null)
-  let activeIndexRef = useRef(viewMap[commonState.navActiveId])
-  // const isScrollingRef = useRef(false)
-  // const scrollPositionRef = useRef(-1)
+  let activeIndexRef = useRef(viewMap[commonState.navActiveId] ?? 0)
 
-  // const handlePageScroll = useCallback(({ nativeEvent }) => {
-  //   console.log(nativeEvent.offset, activeIndexRef.current)
-  //   // if (activeIndexRef.current == -1) return
-  //   // if (nativeEvent.offset == 0) {
-  //   //   isScrollingRef.current = false
+  useEffect(() => {
+    if (activeNavId !== 'nav_search') {
+      previousTabRef.current = activeNavId
+    }
+  }, [activeNavId])
 
-  //   //   const index = nativeEvent.position
-  //   //   if (activeIndexRef.current == index) return
-  //   //   activeIndexRef.current = index
-  //   //   setNavActiveIndex(index)
-  //   // } else if (!isScrollingRef.current) {
-  //   //   isScrollingRef.current = true
-  //   // }
-  // }, [setNavActiveIndex])
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (commonState.navActiveId === 'nav_search') {
+        setNavActiveId((previousTabRef.current as any) || 'nav_songlist')
+        return true
+      }
+      return false
+    })
+    return () => backHandler.remove()
+  }, [])
 
   const onPageSelected = useCallback(({ nativeEvent }: PagerViewOnPageSelectedEvent) => {
-    // console.log(nativeEvent)
     activeIndexRef.current = nativeEvent.position
-    if (activeIndexRef.current != viewMap[commonState.navActiveId]) {
-      setNavActiveId(indexMap[activeIndexRef.current])
+    const targetId = indexMap[activeIndexRef.current]
+    if (targetId && commonState.navActiveId !== targetId) {
+      setNavActiveId(targetId)
     }
   }, [])
 
   const onPageScrollStateChanged = useCallback(({ nativeEvent }: PageScrollStateChangedNativeEvent) => {
-    // console.log(nativeEvent)
     const idle = nativeEvent.pageScrollState == 'idle'
     if (global.lx.homePagerIdle != idle) global.lx.homePagerIdle = idle
-    // if (nativeEvent.pageScrollState != 'idle') return
-    // if (scrollPositionRef.current != commonState.navActiveIndex) {
-    //   setNavActiveIndex(scrollPositionRef.current)
-    // }
-    // if (activeIndexRef.current == -1) return
-    // if (nativeEvent.offset == 0) {
-    //   isScrollingRef.current = false
-
-    //   const index = nativeEvent.position
-    //   if (activeIndexRef.current == index) return
-    //   activeIndexRef.current = index
-    //   setNavActiveIndex(index)
-    // } else if (!isScrollingRef.current) {
-    //   isScrollingRef.current = true
-    // }
   }, [])
 
   useEffect(() => {
     const handleUpdate = (id: CommonState['navActiveId']) => {
+      if (id === 'nav_search') return
       const index = viewMap[id]
-      if (activeIndexRef.current == index) return
+      if (index == null || activeIndexRef.current == index) return
       activeIndexRef.current = index
       pagerViewRef.current?.setPageWithoutAnimation(index)
     }
@@ -254,7 +242,6 @@ const Main = () => {
       if (!keys.includes('common.homePageScroll')) return
       pagerViewRef.current?.setScrollEnabled(setting['common.homePageScroll']!)
     }
-    // window.requestAnimationFrame(() => pagerViewRef.current && pagerViewRef.current.setPage(activeIndexRef.current))
     global.state_event.on('navActiveIdUpdated', handleUpdate)
     global.state_event.on('configUpdated', handleConfigUpdate)
     return () => {
@@ -263,20 +250,17 @@ const Main = () => {
     }
   }, [])
 
+  const isSearchActive = activeNavId === 'nav_search'
 
   const component = useMemo(() => (
     <PagerView ref={pagerViewRef}
       initialPage={activeIndexRef.current}
-      // onPageScroll={handlePageScroll}
       offscreenPageLimit={1}
       onPageSelected={onPageSelected}
       onPageScrollStateChanged={onPageScrollStateChanged}
       scrollEnabled={settingState.setting['common.homePageScroll']}
       style={styles.pagerView}
     >
-      <View collapsable={false} key="nav_search" style={styles.pageStyle}>
-        <SearchPage />
-      </View>
       <View collapsable={false} key="nav_songlist" style={styles.pageStyle}>
         <SongListPage />
       </View>
@@ -289,28 +273,26 @@ const Main = () => {
       <View collapsable={false} key="nav_setting" style={styles.pageStyle}>
         <SettingPage />
       </View>
-      {/* <View collapsable={false} key="nav_search" style={styles.pageStyle}>
-        <Search />
-      </View>
-      <View collapsable={false} key="nav_songlist" style={styles.pageStyle}>
-        <SongList />
-      </View>
-      <View collapsable={false} key="nav_top" style={styles.pageStyle}>
-        <Leaderboard />
-      </View>
-      <View collapsable={false} key="nav_love" style={styles.pageStyle}>
-        <Mylist />
-      </View>
-      <View collapsable={false} key="nav_setting" style={styles.pageStyle}>
-        <Setting />
-      </View> */}
     </PagerView>
   ), [onPageScrollStateChanged, onPageSelected])
 
-  return component
+  return (
+    <View style={styles.mainContainer}>
+      {component}
+      {isSearchActive ? (
+        <View style={[styles.searchOverlay, { backgroundColor: theme['c-content-background'] }]}>
+          <SearchPage />
+        </View>
+      ) : null}
+    </View>
+  )
 }
 
 const styles = createStyle({
+  mainContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   pagerView: {
     flex: 1,
     overflow: 'hidden',
@@ -319,8 +301,11 @@ const styles = createStyle({
     // alignItems: 'center',
     // padding: 20,
   },
+  searchOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 50,
+  },
 })
-
 
 export default Main
 

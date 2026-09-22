@@ -9,6 +9,7 @@ import { useSettingValue } from '@/store/setting/hook'
 import { AnimatedColorText } from '@/components/common/Text'
 import { setSpText } from '@/utils/pixelRatio'
 import playerState from '@/store/player/state'
+import { play } from '@/core/player/player'
 import { scrollTo } from '@/utils/scroll'
 import PlayLine, { type PlayLineType } from '../components/PlayLine'
 // import { screenkeepAwake } from '@/utils/nativeModules/utils'
@@ -295,6 +296,9 @@ export default () => {
   const handlePlayLine = useCallback((time: number) => {
     playLineRef.current?.setVisible(false)
     global.app_event.setProgress(time)
+    if (!playerState.isPlay) {
+      void play()
+    }
   }, [])
 
   const renderItem: FlatListType['renderItem'] = ({ item, index }) => {
@@ -325,8 +329,9 @@ export default () => {
         initialNumToRender={Math.max(line + 10, 10)}
         onScrollToIndexFailed={handleScrollToIndexFailed}
         onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
-      { isShowLyricProgressSetting ? <PlayLine ref={playLineRef} onPlayLine={handlePlayLine} /> : null }
+      { (isShowLyricProgressSetting ?? true) ? <PlayLine ref={playLineRef} onPlayLine={handlePlayLine} /> : null }
     </>
   )
 }

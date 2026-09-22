@@ -9,12 +9,14 @@ import ListMusicSort, { type ListMusicSortType } from './ListMusicSort'
 import DuplicateMusic, { type DuplicateMusicType } from './DuplicateMusic'
 import Text from '@/components/common/Text'
 import { Icon } from '@/components/common/Icon'
+import { useTheme } from '@/store/theme/hook'
 
 interface Props {
   onBackToSongs?: () => void
 }
 
 export default ({ onBackToSongs }: Props) => {
+  const theme = useTheme()
   const listMenuRef = useRef<ListMenuType>(null)
   const listNameEditRef = useRef<ListNameEditType>(null)
   const listMusicSortRef = useRef<ListMusicSortType>(null)
@@ -35,9 +37,17 @@ export default ({ onBackToSongs }: Props) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme['c-content-background'] }]}>
       {/* 现代歌单管理顶部栏 */}
-      <View style={styles.headerBar}>
+      <View
+        style={[
+          styles.headerBar,
+          {
+            backgroundColor: theme['c-main-background'] || '#121620',
+            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+          },
+        ]}
+      >
         <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
           <Icon name="chevron-left" size={18} color="#e5e7eb" />
           <Text style={styles.backText}>返回歌曲</Text>
@@ -79,7 +89,6 @@ export default ({ onBackToSongs }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090a0f',
   },
   headerBar: {
     flexDirection: 'row',

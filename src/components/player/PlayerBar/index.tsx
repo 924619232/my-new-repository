@@ -7,8 +7,20 @@ import PlayInfo from './components/PlayInfo'
 import ControlBtn from './components/ControlBtn'
 import { useTheme } from '@/store/theme/hook'
 import { useSettingValue } from '@/store/setting/hook'
+import { useProgress } from '@/store/player/hook'
 import { navigations } from '@/navigation'
 import commonState from '@/store/common/state'
+
+const HairlineProgress = () => {
+  const { progress } = useProgress()
+  const pct = Math.min(Math.max((progress || 0) * 100, 0), 100)
+
+  return (
+    <View style={styles.hairlineTrack}>
+      <View style={[styles.hairlineFill, { width: `${pct}%` }]} />
+    </View>
+  )
+}
 
 export default memo(({ isHome = false }: { isHome?: boolean }) => {
   const { keyboardShown } = useKeyboard()
@@ -35,6 +47,7 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
         <View style={styles.right}>
           <ControlBtn />
         </View>
+        <HairlineProgress />
       </TouchableOpacity>
     </View>
   ), [theme, isHome])
@@ -66,6 +79,23 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  hairlineTrack: {
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
+  },
+  hairlineFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 1,
   },
   center: {
     flex: 1,

@@ -38,6 +38,18 @@ const TogglePlayBtn = () => {
   )
 }
 
+const PlayQueueBtn = () => {
+  return (
+    <TouchableOpacity
+      style={styles.iconBtn}
+      activeOpacity={0.6}
+      onPress={() => global.app_event.emit('showPlayQueueModal')}
+    >
+      <Icon name='list-loop' color='#9ca3af' size={18} />
+    </TouchableOpacity>
+  )
+}
+
 export default () => {
   const isHorizontalMode = useHorizontalMode()
   return (
@@ -45,6 +57,7 @@ export default () => {
       {isHorizontalMode ? <PlayPrevBtn /> : null}
       <TogglePlayBtn />
       <PlayNextBtn />
+      <PlayQueueBtn />
     </View>
   )
 }

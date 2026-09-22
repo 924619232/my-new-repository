@@ -23,6 +23,7 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   const currentListId = useActiveListId()
   const fetching = useListFetching(currentListId)
   const langId = useSettingValue('common.langId')
+  const theme = useTheme()
   const currentListName = useMemo(() => {
     switch (currentListId) {
       case LIST_IDS.TEMP:
@@ -54,7 +55,16 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   }, [])
 
   return (
-    <View style={[styles.container, { opacity: visibleBar ? 1 : 0 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          opacity: visibleBar ? 1 : 0,
+          backgroundColor: theme['c-main-background'] || '#121620',
+          borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+        },
+      ]}
+    >
       <TouchableOpacity
         onPress={showList}
         onLongPress={onScrollToTop}
@@ -97,8 +107,6 @@ const styles = StyleSheet.create({
     height: 42,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
-    backgroundColor: '#090a0f',
   },
   listSwitchBtn: {
     flexDirection: 'row',

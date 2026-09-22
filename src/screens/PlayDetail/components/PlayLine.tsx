@@ -81,12 +81,24 @@ export default forwardRef<PlayLineType, PlayLineProps>(({ onPlayLine }, ref) => 
   const time = lyricLines[targetLineNum]?.time ?? 0
   const timeLabel = formatPlayTime2(time / 1000)
   return (
-    <Animated.View style={{ ...styles.playLine, opacity: opsAnim }}>
-      <Text style={styles.label} color={theme['c-primary-font']} size={13}>{timeLabel}</Text>
-      <View style={styles.lineContent}>
-        <View style={{ ...styles.line, borderBottomColor: theme['c-primary-alpha-700'] }} />
-        <TouchableOpacity style={styles.button} onPress={handlePlayLine}>
-          <Icon name="play" color={theme['c-button-font']} size={18} />
+    <Animated.View style={{ ...styles.playLine, opacity: opsAnim }} pointerEvents="box-none">
+      <View style={styles.lineContent} pointerEvents="box-none">
+        <View style={{ ...styles.line, borderBottomColor: '#10b981' }} />
+        <TouchableOpacity
+          style={styles.timeBadge}
+          activeOpacity={0.7}
+          onPress={handlePlayLine}
+          hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+        >
+          <Text style={styles.labelText} size={12}>{timeLabel}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.7}
+          onPress={handlePlayLine}
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        >
+          <Icon name="play" color="#ffffff" size={16} />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -98,39 +110,49 @@ const styles = createStyle({
     position: 'absolute',
     width: '100%',
     top: '40%',
+    marginTop: -24,
     left: 0,
-    height: 2,
-    // paddingTop: 5,
-    // paddingBottom: 5,
-    // backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  label: {
-    position: 'absolute',
-    right: 45,
-    bottom: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    height: 48,
+    zIndex: 99,
   },
   lineContent: {
-    // backgroundColor: 'rgba(0,0,0,0.1)',
-    position: 'absolute',
     width: '100%',
-    height: 20,
-    top: -10,
+    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    paddingHorizontal: 12,
   },
   line: {
-    marginLeft: 30,
+    flex: 1,
     borderBottomWidth: BorderWidths.normal2,
     borderStyle: 'dashed',
-    flex: 1,
+    opacity: 0.6,
+  },
+  timeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.5)',
+    marginHorizontal: 8,
+  },
+  labelText: {
+    color: '#34d399',
+    fontWeight: 'bold',
   },
   button: {
-    flex: 0,
-    paddingLeft: 5,
-    paddingRight: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#10b981',
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
 })
+

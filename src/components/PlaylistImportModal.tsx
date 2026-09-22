@@ -14,6 +14,7 @@ import { useTheme } from '@/store/theme/hook'
 import { createUserList, addListMusics, setActiveList } from '@/core/list'
 import listState from '@/store/list/state'
 import { toast } from '@/utils/tools'
+import musicSdk from '@/utils/musicSdk'
 
 export interface PlaylistImportModalProps extends Omit<PopupProps, 'children'> {}
 
@@ -91,12 +92,35 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
         const urlMatch = text.match(/https?:\/\/[^\s]+/i)
         const targetUrl = urlMatch ? urlMatch[0] : text
 
-        const resp = await fetch(`${API_RESOLVE_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`)
-        const res = await resp.json()
+        let songs: any[] = []
+        let listName = '导入外部歌单'
 
-        if (res.code === 200 && res.data && res.data.songs && res.data.songs.length > 0) {
-          const { title, songs } = res.data
-          const listName = title || '导入外部歌单'
+        try {
+          const resp = await fetch(`${API_RESOLVE_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`)
+          const res = await resp.json()
+          if (res.code === 200 && res.data && Array.isArray(res.data.songs)) {
+            songs = res.data.songs
+            if (res.data.title) listName = res.data.title
+          }
+        } catch (e) {
+          console.log('[API_RESOLVE error]', e)
+        }
+
+        // 酷狗歌单/GCID 直连兜底：若 VPS 仅返回预览曲目(<=10首)或遇到海外频控，由客户端国内直连全量提取157首
+        if ((targetUrl.includes('kugou.com') || targetUrl.includes('gcid_')) && songs.length <= 10) {
+          try {
+            setStatusMsg('正在通过客户端国内直连全量同步酷狗曲库 (突破10首限制)...')
+            const kgDetail = await musicSdk.kg.songList.getUserListDetail(targetUrl, 1)
+            if (kgDetail && kgDetail.list && kgDetail.list.length > songs.length) {
+              songs = kgDetail.list
+              if (kgDetail.info?.name) listName = kgDetail.info.name
+            }
+          } catch (err) {
+            console.log('[Kugou client resolve fallback]', err)
+          }
+        }
+
+        if (songs.length > 0) {
           setStatusMsg(`解析到《${listName}》，共 ${songs.length} 首歌曲，正在收录...`)
 
           const listId = `userlist_${Date.now()}`
@@ -112,7 +136,7 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
           popupRef.current?.setVisible(false)
           return
         } else {
-          toast(res.msg || '未解析到有效歌曲列表，请检查链接')
+          toast('未解析到有效歌曲列表，请检查链接')
           setStatusMsg('解析失败，请检查链接是否公开可用')
         }
       } else {

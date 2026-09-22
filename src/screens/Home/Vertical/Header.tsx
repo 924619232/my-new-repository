@@ -1,5 +1,7 @@
+import { useRef, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { useNavActiveId, useStatusbarHeight } from '@/store/common/hook'
+import { useTheme } from '@/store/theme/hook'
 import { setNavActiveId } from '@/core/common'
 import { Icon } from '@/components/common/Icon'
 import Text from '@/components/common/Text'
@@ -11,9 +13,21 @@ import SearchTypeSelector from '@/screens/Home/Views/Search/SearchTypeSelector'
 export default () => {
   const activeId = useNavActiveId()
   const statusBarHeight = useStatusbarHeight()
+  const theme = useTheme()
+  const previousTabRef = useRef<string>('nav_songlist')
+
+  useEffect(() => {
+    if (activeId !== 'nav_search') {
+      previousTabRef.current = activeId
+    }
+  }, [activeId])
 
   const handleSearchClick = () => {
     setNavActiveId('nav_search')
+  }
+
+  const handleBack = () => {
+    setNavActiveId((previousTabRef.current as any) || 'nav_songlist')
   }
 
   const isSearchMode = activeId === 'nav_search'
@@ -35,6 +49,8 @@ export default () => {
           {
             height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
             paddingTop: statusBarHeight,
+            backgroundColor: theme['c-main-background'] || '#121620',
+            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
           },
         ]}
       >
@@ -42,7 +58,7 @@ export default () => {
           <View style={styles.searchHeaderRow}>
             <TouchableOpacity
               style={styles.backBtn}
-              onPress={() => setNavActiveId('nav_songlist')}
+              onPress={handleBack}
             >
               <Icon name="chevron-left" size={20} color="#e5e7eb" />
             </TouchableOpacity>
@@ -52,7 +68,7 @@ export default () => {
           </View>
         ) : (
           <View style={styles.normalHeaderRow}>
-            <Text style={styles.headerTitle}>{titleMap[activeId] || 'CJY 音乐'}</Text>
+            <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>{titleMap[activeId] || 'CJY 音乐'}</Text>
             <TouchableOpacity
               activeOpacity={0.8}
               style={styles.searchPill}
@@ -70,12 +86,10 @@ export default () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#090a0f',
     paddingHorizontal: 12,
     justifyContent: 'center',
     zIndex: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.04)',
   },
   normalHeaderRow: {
     flexDirection: 'row',

@@ -3,10 +3,12 @@ import { View, StyleSheet, BackHandler } from 'react-native'
 import MusicList from './MusicList'
 import MyList from './MyList'
 import { useNavActiveId } from '@/store/common/hook'
+import { useTheme } from '@/store/theme/hook'
 
 export default () => {
   const [viewMode, setViewMode] = useState<'songs' | 'lists'>('songs')
   const activeNavId = useNavActiveId()
+  const theme = useTheme()
 
   useEffect(() => {
     const handleToggleList = (visible: boolean) => {
@@ -32,7 +34,7 @@ export default () => {
   }, [activeNavId, viewMode])
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme['c-content-background'] }]}>
       {viewMode === 'lists' ? (
         <MyList onBackToSongs={() => setViewMode('songs')} />
       ) : (
@@ -45,6 +47,5 @@ export default () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090a0f',
   },
 })
