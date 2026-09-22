@@ -36,7 +36,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon -x test
+          ./gradlew assembleRelease --no-daemon --stacktrace -x test
 
       - name: Verify Built APK
         run: |
@@ -54,8 +54,13 @@ jobs:
           OPENLIST_USER: "admin"
           OPENLIST_PASS: "Chen924619232"
         run: |
-          APK_PATH=$(ls android/app/build/outputs/apk/release/*.apk | head -n 1)
-          APK_NAME=$(basename "$APK_PATH")
+          APK_PATH=$(ls android/app/build/outputs/apk/release/*universal*.apk android/app/build/outputs/apk/release/*.apk 2>/dev/null | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK found!"
+            exit 1
+          fi
+          APK_NAME="lx-music-cjy-release.apk"
+          echo "Found APK: $APK_PATH, preparing upload as $APK_NAME..."
           echo "Logging into OpenList at $OPENLIST_URL..."
           TOKEN=$(curl -s -X POST "$OPENLIST_URL/api/auth/login" \
             -H "Content-Type: application/json" \
@@ -74,4 +79,5 @@ jobs:
             echo "Uploaded $APK_NAME successfully to China Mobile Cloud Drive /移动云盘/apps/!"
           else
             echo "OpenList login failed"
+            exit 1
           fi
