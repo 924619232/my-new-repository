@@ -9,6 +9,7 @@ import { navigations } from '@/navigation'
 import settingState from '@/store/setting/state'
 import ClipboardSnifferModal from '@/components/ClipboardSnifferModal'
 import PlaylistImportModal from '@/components/PlaylistImportModal'
+import DownloadModal from '@/components/DownloadModal'
 
 
 interface Props {
@@ -37,6 +38,7 @@ export default ({ componentId }: Props) => {
       }
       <ClipboardSnifferModal />
       <PlaylistImportModal />
+      <DownloadModal />
     </PageContent>
   )
 }

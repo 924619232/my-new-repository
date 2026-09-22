@@ -15,6 +15,8 @@ import ListMusicSearch, { type ListMusicSearchType } from './ListMusicSearch'
 import MusicPositionModal, { type MusicPositionModalType } from './MusicPositionModal'
 import MetadataEditModal, { type MetadataEditType, type MetadataEditProps } from '@/components/MetadataEditModal'
 import MusicToggleModal, { type MusicToggleModalType } from './MusicToggleModal'
+import downloadManager from '@/services/download/downloadManager'
+import { toast } from '@/utils/tools'
 
 
 export default () => {
@@ -60,6 +62,24 @@ export default () => {
   const hancelScrollToTop = useCallback(() => {
     listRef.current?.scrollToTop()
   }, [])
+
+  const handleBatchDownload = useCallback(() => {
+    const selected = listRef.current?.getSelectedList() || []
+    if (!selected.length) {
+      toast('请先选择要下载的歌曲')
+      return
+    }
+    const onlineMusics = selected.filter(s => s.source !== 'local') as LX.Music.MusicInfoOnline[]
+    if (!onlineMusics.length) {
+      toast('所选歌曲均为本地歌曲')
+      return
+    }
+    void downloadManager.addBatch(onlineMusics).then(count => {
+      toast(`已将 ${count} 首歌曲加入下载队列`)
+      hancelExitSelect()
+      global.app_event.showDownloadModal()
+    })
+  }, [hancelExitSelect])
 
   const showMenu = useCallback((musicInfo: LX.Music.MusicInfo, index: number, position: Position) => {
     listMenuRef.current?.show({
@@ -128,6 +148,7 @@ export default () => {
           onSwitchMode={hancelSwitchSelectMode}
           onSelectAll={isAll => listRef.current?.selectAll(isAll)}
           onExitSelectMode={hancelExitSelect}
+          onBatchDownload={handleBatchDownload}
         />
         <ListSearchBar
           ref={listSearchBarRef}

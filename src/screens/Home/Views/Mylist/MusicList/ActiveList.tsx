@@ -87,6 +87,23 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
               borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.1)',
             },
           ]}
+          onPress={() => global.app_event.showDownloadModal()}
+          activeOpacity={0.7}
+        >
+          <Icon name="download" size={13} color={theme['c-primary']} />
+          <Text style={[styles.importBtnText, { color: theme['c-font'] }]}>
+            下载管理
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.importBtn,
+            {
+              backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+              borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.1)',
+            },
+          ]}
           onPress={() => global.app_event.showPlaylistImportModal()}
           activeOpacity={0.7}
         >

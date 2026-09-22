@@ -5,6 +5,8 @@ import { hasDislike } from '@/core/dislikeList'
 import { existsFile } from '@/utils/fs'
 import { hasMusicUrlByMusic } from '@/utils/data'
 import handleDownloadMusic from '@/core/music/downloadHelper'
+import downloadManager from '@/services/download/downloadManager'
+import { toast } from '@/utils/tools'
 
 export interface SelectInfo {
   musicInfo: LX.Music.MusicInfo
@@ -114,7 +116,22 @@ export default forwardRef<ListMenuType, ListMenuProps>((props, ref) => {
         props.onPlayLater(selectInfo)
         break
       case 'download':
-        void handleDownloadMusic(selectInfo.musicInfo)
+        if (selectInfo.selectedList.length) {
+          const onlineMusics = selectInfo.selectedList.filter(s => s.source !== 'local') as LX.Music.MusicInfoOnline[]
+          if (!onlineMusics.length) {
+            toast('所选歌曲均为本地歌曲')
+            break
+          }
+          void downloadManager.addBatch(onlineMusics).then(count => {
+            toast(`已将 ${count} 首歌曲加入下载队列`)
+            global.app_event.showDownloadModal()
+          })
+        } else {
+          void downloadManager.addBatch([selectInfo.musicInfo as LX.Music.MusicInfoOnline]).then(() => {
+            toast(`已加入下载队列: ${selectInfo.musicInfo.name}`)
+            global.app_event.showDownloadModal()
+          })
+        }
         break
       case 'add':
         props.onAdd(selectInfo)

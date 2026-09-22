@@ -217,6 +217,10 @@ export class AppEvent extends Event {
   showPlayQueueModal() {
     this.emit('showPlayQueueModal')
   }
+
+  showDownloadModal() {
+    this.emit('showDownloadModal')
+  }
 }
 
 

@@ -14,6 +14,7 @@ import { useTheme } from '@/store/theme/hook'
 import { createUserList, addListMusics, setActiveList } from '@/core/list'
 import listState from '@/store/list/state'
 import { toast } from '@/utils/tools'
+import { toNewMusicInfo } from '@/utils'
 import { resolveKugouDirect } from '@/utils/kugouUniversal'
 import musicSdk from '@/utils/musicSdk'
 
@@ -167,14 +168,15 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
         if (songs.length > 0) {
           setStatusMsg(`解析到《${listName}》，共 ${songs.length} 首歌曲，正在收录...`)
 
+          const normalizedSongs = songs.map(s => (s.meta ? s : toNewMusicInfo(s)))
           const listId = `userlist_${Date.now()}`
           await createUserList(listState.userList.length, [
             { id: listId, name: listName, locationUpdateTime: Date.now() },
           ])
-          await addListMusics(listId, songs, 'bottom')
+          await addListMusics(listId, normalizedSongs, 'bottom')
           setActiveList(listId)
 
-          toast(`成功导入歌单《${listName}》(${songs.length}首)`)
+          toast(`成功导入歌单《${listName}》(${normalizedSongs.length}首)`)
           setStatusMsg('')
           setInputText('')
           popupRef.current?.setVisible(false)
@@ -189,13 +191,13 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
         // Multi-line text import fallback
         const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean)
         if (lines.length > 0) {
-          setStatusMsg(`正在解析文本歌单 (${lines.length} 行)...`)
+          setStatusMsg(`正在全网匹配文本曲目 (${lines.length} 行)...`)
           const parsedSongs: LX.Music.MusicInfoOnline[] = []
 
-          for (let i = 0; i < lines.length; i++) {
+          for (let i = 0; i < Math.min(lines.length, 100); i++) {
             const line = lines[i]
             let name = line
-            let singer = '未知歌手'
+            let singer = ''
 
             if (line.includes(' - ')) {
               const parts = line.split(' - ')
@@ -205,27 +207,53 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
               const m = line.match(/《([^》]+)》/)
               if (m) {
                 name = m[1].trim()
-                singer = line.replace(m[0], '').trim() || '未知歌手'
+                singer = line.replace(m[0], '').trim()
               }
             }
 
-            parsedSongs.push({
-              id: `custom_txt_${Date.now()}_${i}`,
-              name,
-              singer,
-              source: 'kw',
-              interval: '03:30',
-              meta: {
-                songId: `txt_${Date.now()}_${i}`,
-                albumName: '文本导入',
-                qualitys: [{ type: '128k', size: '3.5M' }, { type: '320k', size: '8.5M' }, { type: 'flac', size: '25M' }],
-                _qualitys: {
-                  '128k': { size: '3.5M' },
-                  '320k': { size: '8.5M' },
-                  'flac': { size: '25M' },
+            const query = `${name} ${singer}`.trim()
+            let matchedSong: any = null
+
+            // 优先通过酷我搜索真实歌曲
+            try {
+              const res = await musicSdk.kw.musicSearch.search(query, 1, 1)
+              if (res?.list?.length > 0) {
+                matchedSong = toNewMusicInfo(res.list[0])
+              }
+            } catch {}
+
+            // 酷狗兜底搜索
+            if (!matchedSong) {
+              try {
+                const kgRes = await musicSdk.kg.musicSearch.search(query, 1, 1)
+                if (kgRes?.list?.length > 0) {
+                  matchedSong = toNewMusicInfo(kgRes.list[0])
+                }
+              } catch {}
+            }
+
+            if (matchedSong) {
+              parsedSongs.push(matchedSong)
+            } else {
+              // 无法匹配时构建带有完整 meta 的标准实体
+              parsedSongs.push({
+                id: `custom_txt_${Date.now()}_${i}`,
+                name,
+                singer: singer || '未知歌手',
+                source: 'kw',
+                interval: '03:30',
+                meta: {
+                  songId: `txt_${Date.now()}_${i}`,
+                  albumName: '文本导入',
+                  picUrl: null,
+                  qualitys: [{ type: '128k', size: null }, { type: '320k', size: null }],
+                  _qualitys: {
+                    '128k': { size: null },
+                    '320k': { size: null },
+                  },
                 },
-              },
-            })
+              })
+            }
           }
 
           if (parsedSongs.length > 0) {
@@ -237,7 +265,7 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
             await addListMusics(listId, parsedSongs, 'bottom')
             setActiveList(listId)
 
-            toast(`成功导入《${listName}》`)
+            toast(`成功导入并匹配《${listName}》`)
             setStatusMsg('')
             setInputText('')
             popupRef.current?.setVisible(false)

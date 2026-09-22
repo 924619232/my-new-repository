@@ -64,22 +64,48 @@ export const resolveKugouDirect = async (inputStr: string): Promise<{ title: str
       const cover = (s.trans_param?.union_cover || '').replace('{size}', '300').replace('http://', 'https://')
       const album = s.remark || '官方正版专辑'
 
+      const playTime = formatPlayTime2(dur)
       return {
         id: `kg_${hash}`,
-        title: songTitle,
         name: songTitle,
-        artist,
+        title: songTitle,
         singer: artist,
+        artist,
         album,
         albumName: album,
-        duration: formatPlayTime2(dur),
-        interval: dur,
+        source: 'kg',
+        interval: playTime,
+        duration: playTime,
         pic_url: cover,
         cover_url: cover,
         img: cover,
         hash,
-        source: 'kg',
-        types: [{ type: '128k' }, { type: '320k' }, { type: 'flac' }, { type: 'flac24bit' }],
+        songmid: hash,
+        types: [{ type: '128k', size: null, hash }, { type: '320k', size: null, hash }, { type: 'flac', size: null, hash }, { type: 'flac24bit', size: null, hash }],
+        _types: {
+          '128k': { size: null, hash },
+          '320k': { size: null, hash },
+          flac: { size: null, hash },
+          flac24bit: { size: null, hash },
+        },
+        meta: {
+          songId: hash,
+          albumName: album,
+          picUrl: cover,
+          hash,
+          qualitys: [
+            { type: '128k', size: null, hash },
+            { type: '320k', size: null, hash },
+            { type: 'flac', size: null, hash },
+            { type: 'flac24bit', size: null, hash },
+          ],
+          _qualitys: {
+            '128k': { size: null, hash },
+            '320k': { size: null, hash },
+            flac: { size: null, hash },
+            flac24bit: { size: null, hash },
+          },
+        },
       }
     })
 

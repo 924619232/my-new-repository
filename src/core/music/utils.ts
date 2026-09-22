@@ -296,35 +296,47 @@ export const handleGetOnlineMusicUrl = async({ musicInfo, quality, onToggleSourc
   isFromCache: boolean
 }> => {
   if (!await global.lx.apiInitPromise[0]) throw new Error('source init failed')
-  // console.log(musicInfo.source)
   const targetQuality = quality ?? getPlayQuality(settingState.setting['player.playQuality'], musicInfo)
 
-  let reqPromise
-  try {
-    reqPromise = musicSdk[musicInfo.source].getMusicUrl(toOldMusicInfo(musicInfo), targetQuality).promise
-  } catch (err: any) {
-    reqPromise = Promise.reject(err)
+  // 优先在当前原生平台源内按音质优先级尝试 (目标音质 -> 320k -> 128k)，避免无端换源
+  const candidateQualities: LX.Quality[] = [targetQuality]
+  if (targetQuality !== '320k' && (musicInfo.meta._qualitys?.['320k'] || targetQuality === 'flac' || targetQuality === 'flac24bit')) {
+    candidateQualities.push('320k')
   }
-  return reqPromise.then(({ url, type }: { url: string, type: LX.Quality }) => {
-    return { musicInfo, url, quality: type, isFromCache: false }
-  }).catch(async(err: any) => {
-    console.log(err)
-    if (!allowToggleSource || err.message == requestMsg.tooManyRequests) throw err
-    onToggleSource()
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    return getOtherSource(musicInfo).then(otherSource => {
-      // console.log('find otherSource', otherSource.length)
-      if (otherSource.length) {
-        return getOnlineOtherSourceMusicUrl({
-          musicInfos: [...otherSource],
-          onToggleSource,
-          quality,
-          isRefresh,
-          retryedSource: [musicInfo.source],
-        })
+  if (targetQuality !== '128k') {
+    candidateQualities.push('128k')
+  }
+
+  let lastErr: any = null
+  const oldMusicInfo = toOldMusicInfo(musicInfo)
+
+  for (const q of candidateQualities) {
+    try {
+      const res = await musicSdk[musicInfo.source].getMusicUrl(oldMusicInfo, q).promise
+      if (res?.url) {
+        return { musicInfo, url: res.url, quality: res.type || q, isFromCache: false }
       }
-      throw err
-    })
+    } catch (err: any) {
+      lastErr = err
+      if (err.message == requestMsg.tooManyRequests) throw err
+      // 本地源当前音质获取失败，继续尝试同源降级音质
+    }
+  }
+
+  // 原生平台各档位均无法播放时，才进入跨源自动换源
+  if (!allowToggleSource) throw (lastErr || new Error('获取音频直链失败'))
+  onToggleSource()
+  return getOtherSource(musicInfo).then(otherSource => {
+    if (otherSource.length) {
+      return getOnlineOtherSourceMusicUrl({
+        musicInfos: [...otherSource],
+        onToggleSource,
+        quality,
+        isRefresh,
+        retryedSource: [musicInfo.source],
+      })
+    }
+    throw (lastErr || new Error('全平台换源失败'))
   })
 }
 
