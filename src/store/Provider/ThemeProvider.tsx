@@ -9,16 +9,19 @@ export default memo(({ children }: {
   const [theme, setTheme] = useState(themeState.theme)
 
   useEffect(() => {
-    const handleUpdateTheme = (theme: LX.ActiveTheme) => {
+    if (themeState.theme && themeState.theme.id !== theme.id) {
+      setTheme(themeState.theme)
+    }
+    const handleUpdateTheme = (updatedTheme: LX.ActiveTheme) => {
       requestAnimationFrame(() => {
-        setTheme(theme)
+        setTheme(updatedTheme)
       })
     }
     global.state_event.on('themeUpdated', handleUpdateTheme)
     return () => {
       global.state_event.off('themeUpdated', handleUpdateTheme)
     }
-  }, [])
+  }, [theme.id])
 
   return (
     <ThemeContext.Provider value={theme}>

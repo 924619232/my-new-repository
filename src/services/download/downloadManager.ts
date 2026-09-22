@@ -1,3 +1,4 @@
+import { Platform, PermissionsAndroid } from 'react-native'
 import RNFS from 'react-native-fs'
 import { downloadFile, mkdir, existsFile } from '@/utils/fs'
 
@@ -15,20 +16,61 @@ export interface DownloadTask {
   error?: string
 }
 
-const MUSIC_DOWNLOAD_DIR = '/storage/emulated/0/Music/CJYMusic'
+const PRIMARY_DOWNLOAD_DIR = '/storage/emulated/0/Music/CJYMusic'
 
 class DownloadManager {
   private activeJobId: number | null = null
+  private writableDir: string = PRIMARY_DOWNLOAD_DIR
 
-  async init(): Promise<void> {
+  async requestPermissions(): Promise<boolean> {
+    if (Platform.OS !== 'android') return true
     try {
-      const exists = await existsFile(MUSIC_DOWNLOAD_DIR)
-      if (!exists) {
-        await mkdir(MUSIC_DOWNLOAD_DIR)
+      if (Platform.Version >= 33) {
+        await PermissionsAndroid.requestMultiple([
+          'android.permission.READ_MEDIA_AUDIO' as any,
+        ])
+        return true
+      } else {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        ])
+        return granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === PermissionsAndroid.RESULTS.GRANTED
       }
-    } catch (e) {
-      console.warn('[Download] Dir init error:', e)
+    } catch {
+      return false
     }
+  }
+
+  async getWritableDir(): Promise<string> {
+    await this.requestPermissions()
+
+    const candidates = [
+      PRIMARY_DOWNLOAD_DIR,
+      `${RNFS.DownloadDirectoryPath}/CJYMusic`,
+      `${RNFS.ExternalDirectoryPath}/Music`,
+      `${RNFS.DocumentDirectoryPath}/Music`,
+    ]
+
+    for (const dir of candidates) {
+      try {
+        const exists = await existsFile(dir)
+        if (!exists) {
+          await mkdir(dir)
+        }
+        // Probe writability
+        const testFile = `${dir}/.probe_${Date.now()}`
+        await RNFS.writeFile(testFile, 'ok', 'utf8')
+        await RNFS.unlink(testFile).catch(() => {})
+        this.writableDir = dir
+        return dir
+      } catch (err) {
+        console.warn(`[Download] Candidate dir ${dir} not writable:`, err)
+      }
+    }
+
+    this.writableDir = RNFS.ExternalDirectoryPath || RNFS.DocumentDirectoryPath
+    return this.writableDir
   }
 
   async startDownload(
@@ -37,20 +79,20 @@ class DownloadManager {
     directUrl: string,
     onProgress?: (progress: number) => void
   ): Promise<string> {
-    await this.init()
+    const targetDir = await this.getWritableDir()
 
     const ext = quality === 'flac' ? 'flac' : 'mp3'
     const cleanName = `${music.singer} - ${music.name}`.replace(/[\\/:*?"<>|]/g, '_')
-    const destPath = `${MUSIC_DOWNLOAD_DIR}/${cleanName}.${ext}`
+    const destPath = `${targetDir}/${cleanName}.${ext}`
 
     return new Promise((resolve, reject) => {
       const res = downloadFile(directUrl, destPath, {
         progressDivider: 2,
         progressInterval: 250,
         progress: (p) => {
-          const percent = Math.round((p.bytesWritten / p.contentLength) * 100)
+          const percent = p.contentLength > 0 ? Math.round((p.bytesWritten / p.contentLength) * 100) : 0
           if (onProgress) onProgress(percent)
-        }
+        },
       })
 
       this.activeJobId = res.jobId
@@ -60,12 +102,15 @@ class DownloadManager {
           this.activeJobId = null
           if (result.statusCode === 200 || result.statusCode === 206) {
             if (music.pic) {
-              const coverPath = `${MUSIC_DOWNLOAD_DIR}/${cleanName}.jpg`
+              const coverPath = `${targetDir}/${cleanName}.jpg`
               void downloadFile(music.pic, coverPath, {}).promise.catch(() => {})
+            }
+            if (Platform.OS === 'android' && (RNFS as any).scanFile) {
+              ;(RNFS as any).scanFile(destPath).catch(() => {})
             }
             resolve(destPath)
           } else {
-            reject(new Error(`Download failed with status ${result.statusCode}`))
+            reject(new Error(`下载失败 (HTTP ${result.statusCode})`))
           }
         })
         .catch((err) => {

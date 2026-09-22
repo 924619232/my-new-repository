@@ -103,8 +103,19 @@ export const initSetting = async() => {
     }
   }
 
+  if (setting && (setting['theme.id'] === 'green' || !setting['theme.id'])) {
+    setting['theme.id'] = 'obsidian_glass'
+    setting['theme.lightId'] = 'obsidian_glass'
+    setting['theme.darkId'] = 'obsidian_glass'
+  }
+
   // console.log(setting)
   const updatedSetting = updateSetting(setting, true)
+  if (updatedSetting.setting['theme.id'] === 'green' || !updatedSetting.setting['theme.id']) {
+    updatedSetting.setting['theme.id'] = 'obsidian_glass'
+    updatedSetting.setting['theme.lightId'] = 'obsidian_glass'
+    updatedSetting.setting['theme.darkId'] = 'obsidian_glass'
+  }
   void saveData(storageDataPrefix.setting, updatedSetting.setting)
 
   return updatedSetting

@@ -32,7 +32,7 @@ export const handleDownloadMusic = async(musicInfo: LX.Music.MusicInfo | LX.Musi
       pic = await getPicPath({ musicInfo: musicInfo as any })
     } catch {}
 
-    await downloadManager.startDownload(
+    const savedPath = await downloadManager.startDownload(
       {
         id: String(musicInfo.id),
         name: musicInfo.name,
@@ -48,7 +48,7 @@ export const handleDownloadMusic = async(musicInfo: LX.Music.MusicInfo | LX.Musi
       }
     )
 
-    toast(`下载成功: ${musicInfo.name}\n已保存至 /Music/CJYMusic/`)
+    toast(`下载成功: ${musicInfo.name}\n已保存至: ${savedPath}`)
   } catch (err: any) {
     console.warn('Download error:', err)
     toast(`下载出错: ${err.message || '网络异常'}`)

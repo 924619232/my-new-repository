@@ -61,10 +61,10 @@ const Header = () => {
   const theme = useTheme()
   const statusBarHeight = useStatusbarHeight()
   return (
-    <View style={{ paddingTop: statusBarHeight, backgroundColor: theme['c-primary-light-700-alpha-500'] }}>
+    <View style={{ paddingTop: statusBarHeight, backgroundColor: theme.isDark ? 'rgba(18, 22, 32, 0.98)' : theme['c-primary-light-700-alpha-500'] }}>
       <View style={styles.header}>
-        <Icon name="logo" color={theme['c-primary-dark-100-alpha-300']} size={28} />
-        <Text style={styles.headerText} size={28} color={theme['c-primary-dark-100-alpha-300']}>LX Music</Text>
+        <Icon name="logo" color={theme.isDark ? '#10b981' : theme['c-primary-dark-100-alpha-300']} size={28} />
+        <Text style={styles.headerText} size={28} color={theme.isDark ? '#f3f4f6' : theme['c-primary-dark-100-alpha-300']}>LX Music</Text>
       </View>
     </View>
   )
@@ -84,15 +84,15 @@ const MenuItem = ({ id, icon, onPress }: {
   return activeId == id
     ? <View style={styles.menuItem}>
         <View style={styles.iconContent}>
-          <Icon name={icon} size={20} color={theme['c-primary-font-active']} />
+          <Icon name={icon} size={20} color={theme.isDark ? '#10b981' : theme['c-primary-font-active']} />
         </View>
-        <Text style={styles.text} color={theme['c-primary-font']}>{t(id)}</Text>
+        <Text style={styles.text} color={theme.isDark ? '#10b981' : theme['c-primary-font']}>{t(id)}</Text>
       </View>
     : <TouchableOpacity style={styles.menuItem} onPress={() => { onPress(id) }}>
         <View style={styles.iconContent}>
-          <Icon name={icon} size={20} color={theme['c-font-label']} />
+          <Icon name={icon} size={20} color={theme.isDark ? '#9ca3af' : theme['c-font-label']} />
         </View>
-        <Text style={styles.text}>{t(id)}</Text>
+        <Text style={styles.text} color={theme.isDark ? '#d1d5db' : undefined}>{t(id)}</Text>
       </TouchableOpacity>
 }
 
@@ -124,7 +124,7 @@ export default memo(() => {
 
 
   return (
-    <View style={{ ...styles.container, backgroundColor: theme['c-content-background'] }}>
+    <View style={{ ...styles.container, backgroundColor: theme.isDark ? '#090a0f' : theme['c-content-background'] }}>
       <Header />
       <ScrollView style={styles.menus}>
         <View style={styles.list}>
