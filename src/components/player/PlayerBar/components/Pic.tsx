@@ -1,28 +1,37 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { navigations } from '@/navigation'
+import { StyleSheet, View, Animated, Easing } from 'react-native'
 import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
-import commonState from '@/store/common/state'
-import playerState from '@/store/player/state'
-import { LIST_IDS, NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
+import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import Image from '@/components/common/Image'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { setLoadErrorPicUrl, setMusicInfo } from '@/core/player/playInfo'
 import { Icon } from '@/components/common/Icon'
 
 export default ({ isHome }: { isHome: boolean }) => {
   const musicInfo = usePlayerMusicInfo()
   const isPlaying = useIsPlay()
+  const spinAnim = useRef(new Animated.Value(0)).current
+  const spinAnimationRef = useRef<Animated.CompositeAnimation | null>(null)
 
-  const handlePress = () => {
-    navigations.pushPlayDetailScreen(commonState.componentIds.home!)
-  }
+  useEffect(() => {
+    if (isPlaying) {
+      spinAnimationRef.current = Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 12000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      )
+      spinAnimationRef.current.start()
+    } else {
+      spinAnimationRef.current?.stop()
+    }
+  }, [isPlaying])
 
-  const handleLongPress = () => {
-    if (!isHome) return
-    const listId = playerState.playMusicInfo.listId
-    if (!listId || listId == LIST_IDS.DOWNLOAD) return
-    global.app_event.jumpListPosition()
-  }
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  })
 
   const handleError = useCallback((url: string | number) => {
     setLoadErrorPicUrl(url as string)
@@ -32,46 +41,43 @@ export default ({ isHome }: { isHome: boolean }) => {
   }, [])
 
   return (
-    <TouchableOpacity
-      onLongPress={handleLongPress}
-      onPress={handlePress}
-      activeOpacity={0.8}
-      style={styles.wrapper}
-    >
-      {musicInfo.pic ? (
-        <Image
-          url={musicInfo.pic}
-          nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic}
-          style={styles.image}
-          onError={handleError}
-        />
-      ) : (
-        <View style={styles.fallbackDisk}>
-          <Icon name="album" size={20} color="#10b981" />
-        </View>
-      )}
-    </TouchableOpacity>
+    <View style={styles.wrapper} pointerEvents="none">
+      <Animated.View style={{ transform: [{ rotate: spin }] }}>
+        {musicInfo.pic ? (
+          <Image
+            url={musicInfo.pic}
+            nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic}
+            style={styles.image}
+            onError={handleError}
+          />
+        ) : (
+          <View style={styles.fallbackDisk}>
+            <Icon name="album" size={22} color="#10b981" />
+          </View>
+        )}
+      </Animated.View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingLeft: 2,
+    paddingLeft: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   image: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1.5,
     borderColor: '#10b981',
     backgroundColor: '#1f293d',
   },
   fallbackDisk: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1.5,
     borderColor: '#10b981',
     backgroundColor: '#121620',

@@ -3,7 +3,6 @@ import { Icon } from '@/components/common/Icon'
 import { useIsPlay } from '@/store/player/hook'
 import { playNext, playPrev, togglePlay } from '@/core/player/player'
 import { createStyle } from '@/utils/tools'
-import { useHorizontalMode } from '@/utils/hooks'
 
 const handlePlayPrev = () => {
   void playPrev()
@@ -51,10 +50,9 @@ const PlayQueueBtn = () => {
 }
 
 export default () => {
-  const isHorizontalMode = useHorizontalMode()
   return (
     <View style={styles.controlsRow}>
-      {isHorizontalMode ? <PlayPrevBtn /> : null}
+      <PlayPrevBtn />
       <TogglePlayBtn />
       <PlayNextBtn />
       <PlayQueueBtn />

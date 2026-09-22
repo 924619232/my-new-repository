@@ -1,41 +1,40 @@
-import { TouchableOpacity, View, StyleSheet } from 'react-native'
-import { navigations } from '@/navigation'
-import { usePlayerMusicInfo } from '@/store/player/hook'
-import commonState from '@/store/common/state'
-import playerState from '@/store/player/state'
+import { View, StyleSheet } from 'react-native'
+import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
+import { useLrcPlay } from '@/plugins/lyric'
 import Text from '@/components/common/Text'
-import { LIST_IDS } from '@/config/constant'
 
-export default ({ isHome }: { isHome: boolean }) => {
+export default ({ isHome }: { isHome?: boolean }) => {
   const musicInfo = usePlayerMusicInfo()
-
-  const handlePress = () => {
-    navigations.pushPlayDetailScreen(commonState.componentIds.home!)
-  }
-
-  const handleLongPress = () => {
-    const listId = playerState.playMusicInfo.listId
-    if (!listId || listId == LIST_IDS.DOWNLOAD) return
-    global.app_event.jumpListPosition()
-  }
+  const isPlay = useIsPlay()
+  const lrcInfo = useLrcPlay()
 
   const title = musicInfo.id ? musicInfo.name : 'CJY 臻品音频'
-  const singer = musicInfo.id ? (musicInfo.singer || '无损原唱') : '极速直链秒播'
+  const singer = musicInfo.id ? (musicInfo.singer || '官方原唱') : '极速直链秒播'
+  const album = (musicInfo as any)?.albumName || (musicInfo as any)?.meta?.albumName || ''
+
+  const hasLiveLyric = Boolean(isPlay && lrcInfo?.text)
+  const subtitle = hasLiveLyric ? `♪ ${lrcInfo.text}` : (album ? `${singer} · ${album}` : singer)
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onLongPress={handleLongPress}
-      onPress={handlePress}
-      activeOpacity={0.8}
-    >
-      <Text numberOfLines={1} style={styles.titleText}>
-        {title}
+    <View style={styles.container} pointerEvents="none">
+      <View style={styles.titleRow}>
+        <Text numberOfLines={1} style={styles.titleText}>
+          {title}
+        </Text>
+        <View style={styles.hiResBadge}>
+          <Text style={styles.hiResText}>Hi-Res</Text>
+        </View>
+      </View>
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.subtitleText,
+          hasLiveLyric ? styles.lyricActiveText : styles.singerMutedText,
+        ]}
+      >
+        {subtitle}
       </Text>
-      <Text numberOfLines={1} style={styles.singerText}>
-        {singer}
-      </Text>
-    </TouchableOpacity>
+    </View>
   )
 }
 
@@ -44,14 +43,39 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   titleText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 15,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  hiResBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+    backgroundColor: 'rgba(234, 179, 8, 0.16)',
+    borderWidth: 0.5,
+    borderColor: '#eab308',
+  },
+  hiResText: {
+    color: '#facc15',
+    fontSize: 9,
     fontWeight: 'bold',
   },
-  singerText: {
-    color: '#9ca3af',
-    fontSize: 11,
+  subtitleText: {
+    fontSize: 12,
     marginTop: 2,
+  },
+  lyricActiveText: {
+    color: '#34d399',
+    fontWeight: '600',
+  },
+  singerMutedText: {
+    color: '#9ca3af',
   },
 })

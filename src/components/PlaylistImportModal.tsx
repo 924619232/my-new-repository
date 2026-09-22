@@ -14,7 +14,7 @@ import { useTheme } from '@/store/theme/hook'
 import { createUserList, addListMusics, setActiveList } from '@/core/list'
 import listState from '@/store/list/state'
 import { toast } from '@/utils/tools'
-import musicSdk from '@/utils/musicSdk'
+import { resolveKugouDirect } from '@/utils/kugouUniversal'
 
 export interface PlaylistImportModalProps extends Omit<PopupProps, 'children'> {}
 
@@ -95,28 +95,32 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
         let songs: any[] = []
         let listName = '导入外部歌单'
 
-        try {
-          const resp = await fetch(`${API_RESOLVE_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`)
-          const res = await resp.json()
-          if (res.code === 200 && res.data && Array.isArray(res.data.songs)) {
-            songs = res.data.songs
-            if (res.data.title) listName = res.data.title
-          }
-        } catch (e) {
-          console.log('[API_RESOLVE error]', e)
-        }
-
-        // 酷狗歌单/GCID 直连兜底：若 VPS 仅返回预览曲目(<=10首)或遇到海外频控，由客户端国内直连全量提取157首
-        if ((targetUrl.includes('kugou.com') || targetUrl.includes('gcid_')) && songs.length <= 10) {
+        // 1. 优先通过客户端国内极速直连解析酷狗歌单 (突破海外频控，全量157首秒级入库)
+        if (targetUrl.includes('kugou.com') || targetUrl.includes('gcid_')) {
           try {
-            setStatusMsg('正在通过客户端国内直连全量同步酷狗曲库 (突破10首限制)...')
-            const kgDetail = await musicSdk.kg.songList.getUserListDetail(targetUrl, 1)
-            if (kgDetail && kgDetail.list && kgDetail.list.length > songs.length) {
-              songs = kgDetail.list
-              if (kgDetail.info?.name) listName = kgDetail.info.name
+            setStatusMsg('正在通过客户端国内直连全量提取酷狗曲库 (突破10首限制)...')
+            const directRes = await resolveKugouDirect(targetUrl)
+            if (directRes && directRes.songs && directRes.songs.length > 0) {
+              songs = directRes.songs
+              if (directRes.title) listName = directRes.title
             }
           } catch (err) {
-            console.log('[Kugou client resolve fallback]', err)
+            console.log('[Kugou client direct error]', err)
+          }
+        }
+
+        // 2. 服务端聚合解析兜底 (网易云/QQ音乐/酷我等)
+        if (songs.length === 0) {
+          try {
+            setStatusMsg('正在连接云端音源解析中枢...')
+            const resp = await fetch(`${API_RESOLVE_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`)
+            const res = await resp.json()
+            if (res.code === 200 && res.data && Array.isArray(res.data.songs)) {
+              songs = res.data.songs
+              if (res.data.title) listName = res.data.title
+            }
+          } catch (e) {
+            console.log('[API_RESOLVE error]', e)
           }
         }
 
@@ -136,8 +140,10 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
           popupRef.current?.setVisible(false)
           return
         } else {
-          toast('未解析到有效歌曲列表，请检查链接')
-          setStatusMsg('解析失败，请检查链接是否公开可用')
+          toast('未能解析该链接中的歌曲，请确保歌单链接公开有效')
+          setStatusMsg('解析失败，请检查链接有效性')
+          setLoading(false)
+          return // 严格拦截：链接解析失败绝不向后走纯文本逻辑，杜绝产生假单曲！
         }
       } else {
         // Multi-line text import fallback

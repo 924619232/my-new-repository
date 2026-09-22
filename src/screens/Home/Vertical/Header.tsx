@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { useRef, useEffect, useState } from 'react'
+import { View, TouchableOpacity, TextInput, StyleSheet } from 'react-native'
 import { useNavActiveId, useStatusbarHeight } from '@/store/common/hook'
 import { useTheme } from '@/store/theme/hook'
 import { setNavActiveId } from '@/core/common'
@@ -8,13 +8,14 @@ import Text from '@/components/common/Text'
 import StatusBar from '@/components/common/StatusBar'
 import { scaleSizeH } from '@/utils/pixelRatio'
 import { HEADER_HEIGHT } from '@/config/constant'
-import SearchTypeSelector from '@/screens/Home/Views/Search/SearchTypeSelector'
+import { setSearchText, addHistoryWord } from '@/core/search/search'
 
 export default () => {
   const activeId = useNavActiveId()
   const statusBarHeight = useStatusbarHeight()
   const theme = useTheme()
   const previousTabRef = useRef<string>('nav_songlist')
+  const [inputText, setInputText] = useState('')
 
   useEffect(() => {
     if (activeId !== 'nav_search') {
@@ -27,7 +28,26 @@ export default () => {
   }
 
   const handleBack = () => {
+    setInputText('')
     setNavActiveId((previousTabRef.current as any) || 'nav_songlist')
+  }
+
+  const handleTextChange = (text: string) => {
+    setInputText(text)
+    global.app_event.tipSearch(text.trim())
+  }
+
+  const handleSubmitSearch = () => {
+    const text = inputText.trim()
+    if (!text) return
+    setSearchText(text)
+    void addHistoryWord(text)
+    global.app_event.search(text)
+  }
+
+  const handleClear = () => {
+    setInputText('')
+    global.app_event.tipSearch('')
   }
 
   const isSearchMode = activeId === 'nav_search'
@@ -49,8 +69,8 @@ export default () => {
           {
             height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
             paddingTop: statusBarHeight,
-            backgroundColor: theme['c-main-background'] || '#121620',
-            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+            backgroundColor: theme['c-main-background'] || '#0a0d14',
+            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.08)',
           },
         ]}
       >
@@ -59,12 +79,31 @@ export default () => {
             <TouchableOpacity
               style={styles.backBtn}
               onPress={handleBack}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Icon name="chevron-left" size={20} color="#e5e7eb" />
+              <Icon name="chevron-left" size={24} color="#e5e7eb" />
             </TouchableOpacity>
-            <View style={styles.selectorWrapper}>
-              <SearchTypeSelector />
+            <View style={styles.searchField}>
+              <Icon name="search-2" size={15} color="#9ca3af" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="搜索音乐、歌手、大碟..."
+                placeholderTextColor="#6b7280"
+                value={inputText}
+                onChangeText={handleTextChange}
+                onSubmitEditing={handleSubmitSearch}
+                returnKeyType="search"
+                autoFocus
+              />
+              {inputText ? (
+                <TouchableOpacity onPress={handleClear} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Icon name="close" size={13} color="#9ca3af" />
+                </TouchableOpacity>
+              ) : null}
             </View>
+            <TouchableOpacity onPress={handleSubmitSearch} style={styles.searchSubmitBtn} activeOpacity={0.7}>
+              <Text style={styles.searchSubmitText}>搜索</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.normalHeaderRow}>
@@ -120,14 +159,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: '100%',
+    gap: 8,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  selectorWrapper: {
+  searchField: {
     flex: 1,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    color: '#ffffff',
+    fontSize: 13,
+    paddingVertical: 0,
+    paddingHorizontal: 6,
+  },
+  clearBtn: {
+    padding: 4,
+  },
+  searchSubmitBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  searchSubmitText: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 })

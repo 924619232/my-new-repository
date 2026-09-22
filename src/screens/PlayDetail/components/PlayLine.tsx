@@ -63,10 +63,6 @@ export default forwardRef<PlayLineType, PlayLineProps>(({ onPlayLine }, ref) => 
     },
   }))
 
-  const handlePlayLine = () => {
-    onPlayLine(time / 1000)
-  }
-
   if (!scrollInfo || !visible) return null
   const offset = scrollInfo.contentOffset.y + scrollInfo.layoutMeasurement.height * 0.4
   let lineOffset = listLayoutInfo.spaceHeight
@@ -80,6 +76,10 @@ export default forwardRef<PlayLineType, PlayLineProps>(({ onPlayLine }, ref) => 
   if (targetLineNum == -1) targetLineNum = listLayoutInfo.lineHeights.length - 1
   const time = lyricLines[targetLineNum]?.time ?? 0
   const timeLabel = formatPlayTime2(time / 1000)
+
+  const handlePlayLine = () => {
+    onPlayLine(time / 1000)
+  }
   return (
     <Animated.View style={{ ...styles.playLine, opacity: opsAnim }} pointerEvents="box-none">
       <View style={styles.lineContent} pointerEvents="box-none">

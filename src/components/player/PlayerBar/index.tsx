@@ -1,15 +1,15 @@
 import { memo, useMemo } from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, PanResponder } from 'react-native'
 import { useKeyboard } from '@/utils/hooks'
 import Pic from './components/Pic'
 import Title from './components/Title'
-import PlayInfo from './components/PlayInfo'
 import ControlBtn from './components/ControlBtn'
 import { useTheme } from '@/store/theme/hook'
 import { useSettingValue } from '@/store/setting/hook'
 import { useProgress } from '@/store/player/hook'
 import { navigations } from '@/navigation'
 import commonState from '@/store/common/state'
+import { playNext, playPrev } from '@/core/player/player'
 
 const HairlineProgress = () => {
   const { progress } = useProgress()
@@ -33,24 +33,49 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
     }
   }
 
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      return Math.abs(gestureState.dx) > 18 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dx > 35) {
+        // Swiped right -> Previous track
+        void playPrev()
+      } else if (gestureState.dx < -35) {
+        // Swiped left -> Next track
+        void playNext()
+      }
+    },
+  }), [])
+
   const playerComponent = useMemo(() => (
     <View style={styles.floatingContainer}>
-      <TouchableOpacity
-        activeOpacity={0.92}
-        style={styles.capsule}
-        onPress={handleOpenDetail}
-      >
-        <Pic isHome={isHome} />
-        <View style={styles.center}>
-          <Title isHome={isHome} />
+      <View style={styles.capsule}>
+        {/* Top Hairline Progress Bar with Emerald Accent */}
+        <HairlineProgress />
+
+        {/* Left & Center Gesture & Tap Area (Cover + Title + Live Lyrics) */}
+        <View style={styles.interactiveArea} {...panResponder.panHandlers}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.touchableArea}
+            onPress={handleOpenDetail}
+          >
+            <Pic isHome={isHome} />
+            <View style={styles.center}>
+              <Title isHome={isHome} />
+            </View>
+          </TouchableOpacity>
         </View>
+
+        {/* Right Isolated Button Controls: [Prev] [Play 38dp] [Next] [Queue] */}
         <View style={styles.right}>
           <ControlBtn />
         </View>
-        <HairlineProgress />
-      </TouchableOpacity>
+      </View>
     </View>
-  ), [theme, isHome])
+  ), [theme, isHome, panResponder])
 
   return autoHidePlayBar && keyboardShown ? null : playerComponent
 })
@@ -68,15 +93,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(18, 22, 32, 0.96)',
+    backgroundColor: '#0a0d14',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     shadowColor: '#000000',
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 12,
     overflow: 'hidden',
@@ -84,22 +109,33 @@ const styles = StyleSheet.create({
   },
   hairlineTrack: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 20,
     right: 20,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    height: 2.5,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     overflow: 'hidden',
+    zIndex: 10,
   },
   hairlineFill: {
     height: '100%',
     backgroundColor: '#10b981',
-    borderRadius: 1,
+    borderRadius: 1.5,
+  },
+  interactiveArea: {
+    flex: 1,
+    height: '100%',
+  },
+  touchableArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
   },
   center: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     justifyContent: 'center',
   },
   right: {

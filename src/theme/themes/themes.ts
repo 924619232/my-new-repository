@@ -243,8 +243,8 @@ export default [
         "c-000": "rgb(87,87,88)"
       },
       "extInfo": {
-        "c-app-background": "rgba(9, 10, 15, 0.98)",
-        "c-main-background": "rgba(18, 22, 32, 0.92)",
+        "c-app-background": "#0a0d14",
+        "c-main-background": "#0a0d14",
         "bg-image": "",
         "bg-image-position": "center",
         "bg-image-size": "cover",

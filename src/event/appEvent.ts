@@ -170,6 +170,14 @@ export class AppEvent extends Event {
     this.emit('searchTypeChanged', type)
   }
 
+  search(text: string) {
+    this.emit('search', text)
+  }
+
+  tipSearch(text: string) {
+    this.emit('tipSearch', text)
+  }
+
   jumpListPosition() {
     if (commonState.navActiveId == 'nav_love') {
       this.emit('jumpListPosition')
