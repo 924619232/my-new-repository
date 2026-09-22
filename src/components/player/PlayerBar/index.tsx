@@ -1,89 +1,80 @@
 import { memo, useMemo } from 'react'
-import { View } from 'react-native'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { useKeyboard } from '@/utils/hooks'
-
 import Pic from './components/Pic'
 import Title from './components/Title'
 import PlayInfo from './components/PlayInfo'
 import ControlBtn from './components/ControlBtn'
-import { createStyle } from '@/utils/tools'
-// import { useSettingValue } from '@/store/setting/hook'
 import { useTheme } from '@/store/theme/hook'
 import { useSettingValue } from '@/store/setting/hook'
-
+import { navigations } from '@/navigation'
+import commonState from '@/store/common/state'
 
 export default memo(({ isHome = false }: { isHome?: boolean }) => {
-  // const { onLayout, ...layout } = useLayout()
   const { keyboardShown } = useKeyboard()
   const theme = useTheme()
   const autoHidePlayBar = useSettingValue('common.autoHidePlayBar')
 
+  const handleOpenDetail = () => {
+    if (commonState.componentIds.home) {
+      navigations.pushPlayDetailScreen(commonState.componentIds.home)
+    }
+  }
+
   const playerComponent = useMemo(() => (
-    <View style={{ ...styles.container, backgroundColor: theme['c-content-background'] }}>
-      <Pic isHome={isHome} />
-      <View style={styles.center}>
-        <Title isHome={isHome} />
-        {/* <View style={{ ...styles.row, justifyContent: 'space-between' }}>
-          <PlayTime />
-        </View> */}
-        <PlayInfo isHome={isHome} />
-      </View>
-      <View style={styles.right}>
-        <ControlBtn />
-      </View>
+    <View style={styles.floatingContainer}>
+      <TouchableOpacity
+        activeOpacity={0.92}
+        style={styles.capsule}
+        onPress={handleOpenDetail}
+      >
+        <Pic isHome={isHome} />
+        <View style={styles.center}>
+          <Title isHome={isHome} />
+        </View>
+        <View style={styles.right}>
+          <ControlBtn />
+        </View>
+      </TouchableOpacity>
     </View>
   ), [theme, isHome])
-
-  // console.log('render pb')
 
   return autoHidePlayBar && keyboardShown ? null : playerComponent
 })
 
-
-const styles = createStyle({
-  container: {
+const styles = StyleSheet.create({
+  floatingContainer: {
+    position: 'relative',
     width: '100%',
-    // height: 100,
-    // paddingTop: progressContentPadding,
-    // marginTop: -progressContentPadding,
-    // backgroundColor: 'rgba(0, 0, 0, .1)',
-    // borderTopWidth: BorderWidths.normal2,
-    paddingVertical: 5,
-    paddingLeft: 5,
-    // backgroundColor: AppColors.primary,
-    // backgroundColor: 'red',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
+    paddingTop: 4,
+    backgroundColor: 'transparent',
+  },
+  capsule: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(18, 22, 32, 0.96)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 10,
-  },
-  left: {
-    // borderRadius: 3,
-    flexGrow: 0,
-    flexShrink: 0,
+    paddingHorizontal: 8,
+    shadowColor: '#000000',
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 12,
   },
   center: {
-    flexDirection: 'column',
-    flexGrow: 1,
-    flexShrink: 1,
-    paddingLeft: 5,
-    height: '100%',
-    // justifyContent: 'space-evenly',
-    // height: 48,
-    // backgroundColor: 'rgba(0, 0, 0, .1)',
+    flex: 1,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexGrow: 0,
-    flexShrink: 0,
-    paddingLeft: 5,
-    paddingRight: 5,
+    paddingRight: 4,
   },
-  // row: {
-  //   flexDirection: 'row',
-  //   flexGrow: 0,
-  //   flexShrink: 0,
-  // },
 })

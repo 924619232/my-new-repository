@@ -1,12 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
-import { TouchableOpacity } from 'react-native'
-
+import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import { Icon } from '@/components/common/Icon'
-import { BorderWidths } from '@/theme'
 import { useTheme } from '@/store/theme/hook'
 import { useActiveListId, useListFetching } from '@/store/list/hook'
 import listState from '@/store/list/state'
-import { createStyle } from '@/utils/tools'
 import { getListPrevSelectId } from '@/utils/data'
 import { setActiveList } from '@/core/list'
 import Text from '@/components/common/Text'
@@ -23,7 +20,6 @@ export interface ActiveListType {
 }
 
 export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, onScrollToTop }, ref) => {
-  const theme = useTheme()
   const currentListId = useActiveListId()
   const fetching = useListFetching(currentListId)
   const langId = useSettingValue('common.langId')
@@ -38,7 +34,6 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
       default:
         return listState.allList.find(l => l.id === currentListId)?.name ?? ''
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentListId, langId])
   const [visibleBar, setVisibleBar] = useState(true)
 
@@ -59,52 +54,89 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   }, [])
 
   return (
-    <TouchableOpacity onPress={showList} onLongPress={onScrollToTop} style={{ ...styles.currentList, opacity: visibleBar ? 1 : 0, borderBottomColor: theme['c-border-background'] }}>
-      <Icon style={styles.currentListIcon} color={theme['c-button-font']} name="chevron-right" size={12} />
-      { fetching ? <Loading color={theme['c-button-font']} style={styles.loading} /> : null }
-      <Text style={styles.currentListText} numberOfLines={1} color={theme['c-button-font']}>{currentListName}</Text>
-      <TouchableOpacity style={styles.currentListBtns} onPress={() => global.app_event.showPlaylistImportModal()}>
-        <Text size={12} color="#10b981" style={{ fontWeight: 'bold', paddingHorizontal: 6 }}>+导入</Text>
+    <View style={[styles.container, { opacity: visibleBar ? 1 : 0 }]}>
+      <TouchableOpacity
+        onPress={showList}
+        onLongPress={onScrollToTop}
+        style={styles.listSwitchBtn}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.listNameText} numberOfLines={1}>
+          {currentListName}
+        </Text>
+        <Icon name="dots-vertical" size={14} color="#10b981" />
+        {fetching ? <Loading color="#10b981" style={styles.loading} /> : null}
       </TouchableOpacity>
-      <TouchableOpacity style={styles.currentListBtns} onPress={onShowSearchBar}>
-        <Icon color={theme['c-button-font']} name="search-2" />
-      </TouchableOpacity>
-    </TouchableOpacity>
+
+      <View style={styles.rightActions}>
+        <TouchableOpacity
+          style={styles.importBtn}
+          onPress={() => global.app_event.showPlaylistImportModal()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.importBtnText}>+导入歌单</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={onShowSearchBar}
+          activeOpacity={0.7}
+        >
+          <Icon name="search-2" size={16} color="#9ca3af" />
+        </TouchableOpacity>
+      </View>
+    </View>
   )
 })
 
-
-const styles = createStyle({
-  currentList: {
+const styles = StyleSheet.create({
+  container: {
     flexDirection: 'row',
-    paddingRight: 2,
-    height: 36,
     alignItems: 'center',
-    borderBottomWidth: BorderWidths.normal,
-    // backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'space-between',
+    height: 42,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#090a0f',
   },
-  currentListIcon: {
-    paddingLeft: 15,
-    paddingRight: 10,
-    // paddingTop: 10,
-    // paddingBottom: 0,
-  },
-  currentListText: {
+  listSwitchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    // minWidth: 70,
-    // paddingLeft: 10,
-    paddingRight: 10,
-    // paddingTop: 10,
-    // paddingBottom: 10,
+    paddingRight: 8,
+  },
+  listNameText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginRight: 6,
   },
   loading: {
-    marginRight: 5,
+    marginLeft: 6,
   },
-  currentListBtns: {
-    width: 46,
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  importBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  importBtnText: {
+    color: '#34d399',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  iconBtn: {
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100%',
-    // backgroundColor: 'rgba(0,0,0,0.2)',
   },
 })

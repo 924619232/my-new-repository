@@ -254,6 +254,7 @@
   "setting_backup_part_import_list_tip_unzip": "📦檔案解析中...\n若檔案太大可能需要一些時間⏳",
   "setting_backup_part_import_setting": "匯入設定",
   "setting_backup_part_import_setting_desc": "選取設定檔",
+  "setting_download": "下載與儲存",
   "setting_basic": "基本設定",
   "setting_basic_allow_progress_bar_seek": "允許透過底欄進度條調整播放進度",
   "setting_basic_always_keep_statusbar_height": "總是保留狀態欄高度",

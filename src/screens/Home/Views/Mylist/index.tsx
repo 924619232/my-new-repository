@@ -1,70 +1,50 @@
-import { useEffect, useRef } from 'react'
-import settingState from '@/store/setting/state'
+import React, { useEffect, useState } from 'react'
+import { View, StyleSheet, BackHandler } from 'react-native'
 import MusicList from './MusicList'
 import MyList from './MyList'
-import { useTheme } from '@/store/theme/hook'
-import DrawerLayoutFixed, { type DrawerLayoutFixedType } from '@/components/common/DrawerLayoutFixed'
-import { COMPONENT_IDS } from '@/config/constant'
-import { scaleSizeW } from '@/utils/pixelRatio'
-import type { InitState as CommonState } from '@/store/common/state'
-
-const MAX_WIDTH = scaleSizeW(400)
+import { useNavActiveId } from '@/store/common/hook'
 
 export default () => {
-  const drawer = useRef<DrawerLayoutFixedType>(null)
-  const theme = useTheme()
-  // const [width, setWidth] = useState(0)
+  const [viewMode, setViewMode] = useState<'songs' | 'lists'>('songs')
+  const activeNavId = useNavActiveId()
 
   useEffect(() => {
-    const handleFixDrawer = (id: CommonState['navActiveId']) => {
-      if (id == 'nav_love') drawer.current?.fixWidth()
-    }
-    const changeVisible = (visible: boolean) => {
-      if (visible) {
-        requestAnimationFrame(() => {
-          drawer.current?.openDrawer()
-        })
-      } else {
-        drawer.current?.closeDrawer()
-      }
+    const handleToggleList = (visible: boolean) => {
+      setViewMode(visible ? 'lists' : 'songs')
     }
 
-    // setWidth(getWindowSise().width * 0.82)
-
-    global.state_event.on('navActiveIdUpdated', handleFixDrawer)
-    global.app_event.on('changeLoveListVisible', changeVisible)
-
-    // 就放旋转屏幕后的宽度没有更新的问题
-    // const changeEvent = onDimensionChange(({ window }) => {
-    //   setWidth(window.width * 0.82)
-    //   drawer.current?.setNativeProps({
-    //     width: window.width,
-    //   })
-    // })
-
+    global.app_event.on('changeLoveListVisible', handleToggleList)
     return () => {
-      global.state_event.off('navActiveIdUpdated', handleFixDrawer)
-      global.app_event.off('changeLoveListVisible', changeVisible)
-    // changeEvent.remove()
+      global.app_event.off('changeLoveListVisible', handleToggleList)
     }
   }, [])
 
-  const navigationView = () => <MyList />
-  // console.log('render drawer content')
+  // Android back button handling in lists view
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (activeNavId === 'nav_love' && viewMode === 'lists') {
+        setViewMode('songs')
+        return true
+      }
+      return false
+    })
+    return () => backHandler.remove()
+  }, [activeNavId, viewMode])
 
   return (
-    <DrawerLayoutFixed
-      ref={drawer}
-      visibleNavNames={[COMPONENT_IDS.home]}
-      // drawerWidth={width}
-      widthPercentage={0.82}
-      widthPercentageMax={MAX_WIDTH}
-      drawerPosition={settingState.setting['common.drawerLayoutPosition']}
-      renderNavigationView={navigationView}
-      drawerBackgroundColor={theme['c-content-background']}
-      style={{ elevation: 1 }}
-    >
-      <MusicList />
-    </DrawerLayoutFixed>
+    <View style={styles.container}>
+      {viewMode === 'lists' ? (
+        <MyList onBackToSongs={() => setViewMode('songs')} />
+      ) : (
+        <MusicList />
+      )}
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#090a0f',
+  },
+})

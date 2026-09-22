@@ -246,7 +246,7 @@ const theme: LX.ActiveTheme = {
   "bg-image": "",
   "bg-image-position": "center",
   "bg-image-size": "cover",
-  "c-badge-primary": "var(c-primary)",
+  "c-badge-primary": "rgb(16, 185, 129)",
   "c-badge-secondary": "#10b981",
   "c-badge-tertiary": "#34d399",
   "c-font": "rgb(208,209,211)",

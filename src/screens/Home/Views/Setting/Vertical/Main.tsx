@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { FlatList, type FlatListProps } from 'react-native'
 
 import Basic from '../settings/Basic'
+import Download from '../settings/Download'
 import Player from '../settings/Player'
 import LyricDesktop from '../settings/LyricDesktop'
 import Search from '../settings/Search'
@@ -15,7 +16,6 @@ import { createStyle } from '@/utils/tools'
 import { SETTING_SCREENS, type SettingScreenIds } from '../Main'
 
 type FlatListType = FlatListProps<SettingScreenIds>
-
 
 const styles = createStyle({
   content: {
@@ -31,6 +31,7 @@ const ListItem = memo(({
   id,
 }: { id: SettingScreenIds }) => {
   switch (id) {
+    case 'download': return <Download />
     case 'player': return <Player />
     case 'lyric_desktop': return <LyricDesktop />
     case 'search': return <Search />
@@ -56,10 +57,9 @@ export default () => {
       keyExtractor={getkey}
       contentContainerStyle={styles.content}
       maxToRenderPerBatch={2}
-      // updateCellsBatchingPeriod={80}
       windowSize={2}
-      // removeClippedSubviews={true}
-      initialNumToRender={1}
+      removeClippedSubviews={true}
+      initialNumToRender={2}
     />
   )
 }

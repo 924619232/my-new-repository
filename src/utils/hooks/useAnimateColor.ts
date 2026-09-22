@@ -4,16 +4,24 @@ import { Animated } from 'react-native'
 
 const ANIMATION_DURATION = 800
 
+const sanitizeColor = (c?: any): string => {
+  if (!c || typeof c !== 'string' || !c.trim() || c.startsWith('var(')) {
+    return '#10b981'
+  }
+  return c
+}
+
 export const useAnimateColor = (color: string) => {
+  const safeColor = sanitizeColor(color)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const anim = useMemo(() => new Animated.Value(0), [color])
+  const anim = useMemo(() => new Animated.Value(0), [safeColor])
   const [finished, setFinished] = useState(true)
-  const currentColor = useRef(color)
-  const nextColor = useMemo(() => color, [color])
+  const currentColor = useRef(safeColor)
+  const nextColor = useMemo(() => safeColor, [safeColor])
 
   const animColor = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [currentColor.current, nextColor],
+    outputRange: [sanitizeColor(currentColor.current), nextColor],
   })
 
   useEffect(() => {

@@ -254,6 +254,7 @@
   "setting_backup_part_import_list_tip_unzip": "📦File parsing...\nIf the file is too large, it may take some time⏳",
   "setting_backup_part_import_setting": "Import settings",
   "setting_backup_part_import_setting_desc": "Choose a setting backup file",
+  "setting_download": "Download & Storage",
   "setting_basic": "General",
   "setting_basic_allow_progress_bar_seek": "Allow to adjust playback progress by progress bar in bottom",
   "setting_basic_always_keep_statusbar_height": "Always keep status bar height",

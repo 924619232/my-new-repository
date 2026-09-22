@@ -1,33 +1,20 @@
-import { StyleSheet, TouchableOpacity } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { navigations } from '@/navigation'
-import { usePlayerMusicInfo } from '@/store/player/hook'
-import { scaleSizeH } from '@/utils/pixelRatio'
+import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
 import commonState from '@/store/common/state'
 import playerState from '@/store/player/state'
 import { LIST_IDS, NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import Image from '@/components/common/Image'
 import { useCallback } from 'react'
 import { setLoadErrorPicUrl, setMusicInfo } from '@/core/player/playInfo'
-
-const PIC_HEIGHT = scaleSizeH(46)
-
-const styles = StyleSheet.create({
-  image: {
-    width: PIC_HEIGHT,
-    height: PIC_HEIGHT,
-    borderRadius: 2,
-  },
-})
+import { Icon } from '@/components/common/Icon'
 
 export default ({ isHome }: { isHome: boolean }) => {
   const musicInfo = usePlayerMusicInfo()
-  const handlePress = () => {
-    // console.log('')
-    // console.log(playMusicInfo)
-    if (!musicInfo.id) return
-    navigations.pushPlayDetailScreen(commonState.componentIds.home!)
+  const isPlaying = useIsPlay()
 
-    // toast(global.i18n.t('play_detail_todo_tip'), 'long')
+  const handlePress = () => {
+    navigations.pushPlayDetailScreen(commonState.componentIds.home!)
   }
 
   const handleLongPress = () => {
@@ -45,15 +32,50 @@ export default ({ isHome }: { isHome: boolean }) => {
   }, [])
 
   return (
-    <TouchableOpacity onLongPress={handleLongPress} onPress={handlePress} activeOpacity={0.7} >
-      <Image url={musicInfo.pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={styles.image} onError={handleError} />
+    <TouchableOpacity
+      onLongPress={handleLongPress}
+      onPress={handlePress}
+      activeOpacity={0.8}
+      style={styles.wrapper}
+    >
+      {musicInfo.pic ? (
+        <Image
+          url={musicInfo.pic}
+          nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic}
+          style={styles.image}
+          onError={handleError}
+        />
+      ) : (
+        <View style={styles.fallbackDisk}>
+          <Icon name="album" size={20} color="#10b981" />
+        </View>
+      )}
     </TouchableOpacity>
   )
 }
 
-
-// const styles = StyleSheet.create({
-//   playInfoImg: {
-
-//   },
-// })
+const styles = StyleSheet.create({
+  wrapper: {
+    paddingLeft: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    backgroundColor: '#1f293d',
+  },
+  fallbackDisk: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#10b981',
+    backgroundColor: '#121620',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+})

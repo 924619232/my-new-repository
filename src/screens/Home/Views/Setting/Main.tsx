@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
-
 import Basic from './settings/Basic'
+import Download from './settings/Download'
 import Player from './settings/Player'
 import LyricDesktop from './settings/LyricDesktop'
 import Search from './settings/Search'
@@ -13,6 +13,7 @@ import About from './settings/About'
 
 export const SETTING_SCREENS = [
   'basic',
+  'download',
   'player',
   'lyric_desktop',
   'search',
@@ -26,9 +27,6 @@ export const SETTING_SCREENS = [
 
 export type SettingScreenIds = typeof SETTING_SCREENS[number]
 
-// interface MainProps {
-//   onUpdateActiveId: (id: string) => void
-// }
 export interface MainType {
   setActiveId: (id: SettingScreenIds) => void
 }
@@ -48,6 +46,7 @@ const Main = forwardRef<MainType, {}>((props, ref) => {
 
   const component = useMemo(() => {
     switch (id) {
+      case 'download': return <Download />
       case 'player': return <Player />
       case 'lyric_desktop': return <LyricDesktop />
       case 'search': return <Search />
@@ -65,6 +64,4 @@ const Main = forwardRef<MainType, {}>((props, ref) => {
   return component
 })
 
-
 export default Main
-

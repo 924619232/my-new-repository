@@ -32,6 +32,13 @@ export default ({ componentId }: { componentId: string }) => {
     void getData<StageMode>(STAGE_STORAGE_KEY).then(saved => {
       if (saved) setStageMode(saved)
     })
+    const handleStageChange = (mode: StageMode) => {
+      setStageMode(mode)
+    }
+    global.app_event.on('changePlayerStageMode' as any, handleStageChange)
+    return () => {
+      global.app_event.off('changePlayerStageMode' as any, handleStageChange)
+    }
   }, [])
 
   const switchStage = (mode: StageMode) => {
@@ -87,31 +94,6 @@ export default ({ componentId }: { componentId: string }) => {
       <TouchableOpacity activeOpacity={0.9} onPress={cycleStage} style={styles.stageTouchable}>
         {renderStage()}
       </TouchableOpacity>
-
-      {/* 极简发烧级形态微调栏 */}
-      <View style={styles.selectorBar}>
-        {(['vinyl', 'cassette', 'cd', 'vu', 'classic'] as StageMode[]).map((mode) => {
-          const labels: Record<StageMode, string> = {
-            vinyl: '黑胶',
-            cassette: '磁带',
-            cd: 'CD',
-            vu: 'VU表',
-            classic: '封面',
-          }
-          const active = stageMode === mode
-          return (
-            <TouchableOpacity
-              key={mode}
-              onPress={() => switchStage(mode)}
-              style={[styles.chip, active && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {labels[mode]}
-              </Text>
-            </TouchableOpacity>
-          )
-        })}
-      </View>
     </View>
   )
 }
@@ -131,35 +113,5 @@ const styles = createStyle({
   content: {
     backgroundColor: 'rgba(0,0,0,0)',
     borderRadius: 6,
-  },
-  selectorBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderRadius: 16,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-  },
-  chip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginHorizontal: 2,
-  },
-  chipActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.28)',
-    borderWidth: 1,
-    borderColor: '#10b981',
-  },
-  chipText: {
-    color: '#9ca3af',
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  chipTextActive: {
-    color: '#34d399',
-    fontWeight: '700',
   },
 })
