@@ -6,8 +6,8 @@ import { toast } from '@/utils/tools'
 import RNFS from 'react-native-fs'
 
 const PRESETS = [
-  { label: '系统音乐主目录', path: '/storage/emulated/0/Music/CJYMusic' },
-  { label: '系统下载目录', path: `${RNFS.DownloadDirectoryPath}/CJYMusic` },
+  { label: '系统音乐主目录', path: '/storage/emulated/0/Music/LXMusic' },
+  { label: '系统下载目录', path: `${RNFS.DownloadDirectoryPath}/LXMusic` },
   { label: '应用外置存储', path: `${RNFS.ExternalDirectoryPath}/Music` },
 ]
 

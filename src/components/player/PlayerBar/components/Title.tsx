@@ -10,8 +10,8 @@ export default ({ isHome }: { isHome?: boolean }) => {
   const lrcInfo = useLrcPlay()
   const theme = useTheme()
 
-  const title = musicInfo.id ? musicInfo.name : 'CJY 臻品音频'
-  const singer = musicInfo.id ? (musicInfo.singer || '官方原唱') : '极速直链秒播'
+  const title = musicInfo.id ? musicInfo.name : '洛雪音乐'
+  const singer = musicInfo.id ? (musicInfo.singer || '官方原唱') : '听你想听'
   const album = (musicInfo as any)?.albumName || (musicInfo as any)?.meta?.albumName || ''
 
   const hasLiveLyric = Boolean(isPlay && lrcInfo?.text)

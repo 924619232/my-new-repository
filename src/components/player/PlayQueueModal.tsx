@@ -99,7 +99,7 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
         style={[
           styles.container,
           {
-            backgroundColor: theme['c-main-background'] || '#121620',
+            backgroundColor: theme['c-content-background'],
             borderTopColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.08)',
           },
         ]}

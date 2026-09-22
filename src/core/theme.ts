@@ -13,18 +13,23 @@ export const applyTheme = (theme: LX.Theme) => {
 
 export const setTheme = (id: string) => {
   const targetTheme = themes.find(t => t.id === id)
-  const updates: Partial<LX.AppSetting> = { 'theme.id': id }
+  const updates: Partial<LX.AppSetting> = {
+    'theme.id': id,
+    'common.isAutoTheme': false,
+  }
   if (targetTheme) {
     if (targetTheme.isDark) {
       updates['theme.darkId'] = id
     } else {
       updates['theme.lightId'] = id
     }
+    updateSetting(updates)
+    applyTheme(targetTheme)
+  } else {
+    updateSetting(updates)
+    void getTheme().then(theme => {
+      if (theme) applyTheme(theme)
+    })
   }
-  updateSetting(updates)
-  void getTheme().then(theme => {
-    if (theme.id == themeState.theme.id) return
-    applyTheme(theme)
-  })
 }
 

@@ -43,14 +43,14 @@ export default ({ onBackToSongs }: Props) => {
         style={[
           styles.headerBar,
           {
-            backgroundColor: theme['c-main-background'] || '#121620',
-            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+            backgroundColor: theme['c-content-background'],
+            borderBottomColor: theme['c-border-background'],
           },
         ]}
       >
         <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-          <Icon name="chevron-left" size={18} color="#e5e7eb" />
-          <Text style={styles.backText}>返回歌曲</Text>
+          <Icon name="chevron-left" size={18} color={theme['c-font']} />
+          <Text style={[styles.backText, { color: theme['c-font'] }]}>返回歌曲</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>我的歌单</Text>

@@ -15,7 +15,7 @@ import LaserCdStage from '@/views/Player/Stages/LaserCdStage'
 import VuMeterStage from '@/views/Player/Stages/VuMeterStage'
 import { getData, saveData } from '@/plugins/storage'
 
-const STAGE_STORAGE_KEY = 'cjy_player_stage_mode'
+const STAGE_STORAGE_KEY = 'player_stage_mode'
 type StageMode = 'vinyl' | 'cassette' | 'cd' | 'vu' | 'classic'
 
 export default ({ componentId }: { componentId: string }) => {

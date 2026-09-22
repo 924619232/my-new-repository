@@ -24,9 +24,9 @@ export interface DownloadTaskItem {
   createdAt: number
 }
 
-const PRIMARY_DOWNLOAD_DIR = '/storage/emulated/0/Music/CJYMusic'
-const CUSTOM_PATH_STORAGE_KEY = 'cjy_download_custom_dir'
-const TASKS_STORAGE_KEY = 'cjy_download_tasks_v2'
+const PRIMARY_DOWNLOAD_DIR = '/storage/emulated/0/Music/LXMusic'
+const CUSTOM_PATH_STORAGE_KEY = 'lx_download_custom_dir'
+const TASKS_STORAGE_KEY = 'lx_download_tasks_v2'
 const MAX_CONCURRENT = 3
 export const OFFLINE_LIST_ID = 'userlist_download'
 
@@ -137,7 +137,7 @@ class DownloadManager {
     const candidates = [
       saved,
       PRIMARY_DOWNLOAD_DIR,
-      `${RNFS.DownloadDirectoryPath}/CJYMusic`,
+      `${RNFS.DownloadDirectoryPath}/LXMusic`,
       `${RNFS.ExternalDirectoryPath}/Music`,
       `${RNFS.DocumentDirectoryPath}/Music`,
     ].filter(Boolean) as string[]

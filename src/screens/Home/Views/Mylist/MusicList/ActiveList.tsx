@@ -60,8 +60,8 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
         styles.container,
         {
           opacity: visibleBar ? 1 : 0,
-          backgroundColor: theme['c-main-background'] || '#0a0d14',
-          borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.08)',
+          backgroundColor: theme['c-content-background'],
+          borderBottomColor: theme['c-border-background'],
         },
       ]}
     >

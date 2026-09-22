@@ -93,13 +93,14 @@ export const buildActiveThemeColors = (theme: LX.Theme): LX.ActiveTheme => {
     'c-button-background-hover': theme.config.themeColors['c-primary-light-300-alpha-600'],
     'c-button-background-active': theme.config.themeColors['c-primary-light-100-alpha-600'],
     'c-list-header-border-bottom': theme.config.themeColors['c-primary-alpha-900'],
-    'c-content-background': theme.isDark
-      ? ((theme.config.extInfo as any)['c-main-background'] || '#0a0d14')
-      : ((theme.config.extInfo as any)['c-main-background'] || '#ffffff'),
-    'c-main-background': theme.isDark
-      ? ((theme.config.extInfo as any)['c-main-background'] || '#0a0d14')
-      : ((theme.config.extInfo as any)['c-main-background'] || '#ffffff'),
-    'c-border-background': theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    'c-content-background': (theme.config.extInfo as any)['c-app-background'] ||
+      (theme.config.extInfo as any)['c-main-background'] ||
+      theme.config.themeColors['c-primary-light-1000'],
+    'c-main-background': (theme.config.extInfo as any)['c-main-background'] ||
+      theme.config.themeColors['c-primary-light-1000'],
+    'c-border-background': (theme.config.extInfo as any)['c-border-background'] ||
+      theme.config.themeColors['c-primary-light-100-alpha-700'] ||
+      (theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'),
     'bg-image': bgImg,
   } as const
 }

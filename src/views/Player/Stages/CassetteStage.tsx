@@ -40,8 +40,8 @@ export const CassetteStage: React.FC<CassetteStageProps> = ({ isPlaying, title, 
     <View style={styles.cassetteBody}>
       {/* Top Label */}
       <View style={styles.cassetteLabel}>
-        <Text style={styles.cassetteBrand}>CJY CHROME HI-FI 90</Text>
-        <Text numberOfLines={1} style={styles.cassetteTitle}>{title || '臻品发烧磁带'}</Text>
+        <Text style={styles.cassetteBrand}>CHROME POSITION TYPE II · HI-FI 90</Text>
+        <Text numberOfLines={1} style={styles.cassetteTitle}>{title || 'CLASSIC TAPE'}</Text>
         <Text numberOfLines={1} style={styles.cassetteArtist}>{artist || 'Master Recording'}</Text>
       </View>
 

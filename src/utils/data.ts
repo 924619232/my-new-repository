@@ -505,9 +505,9 @@ export const removeSyncHostHistory = async(index: number) => {
 
 export const BUILTIN_CJY_API: LX.UserApi.UserApiInfo = {
   id: 'user_api_cjy_v350',
-  name: 'CJY 臻品无损音源 (国内秒播)',
+  name: '官方无损直解音源 (国内秒播)',
   description: '全平台国内直出 · 客户端原唱直解 · 200ms秒播',
-  author: 'CJY Audio Labs',
+  author: 'LX Audio',
   homepage: 'https://music.cjy.qzz.io',
   version: '3.5.0',
   allowShowUpdateAlert: false,
@@ -520,11 +520,14 @@ export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
   // 清除旧的 cjy_v350_builtin 遗留
   userApis = userApis.filter(api => api.id !== 'cjy_v350_builtin')
 
-  // 始终确保内置 CJY 官方秒播源在列表中首位
-  if (!userApis.some(api => api.id === BUILTIN_CJY_API.id)) {
+  // 始终确保内置官方秒播源在列表中首位
+  const existingIdx = userApis.findIndex(api => api.id === BUILTIN_CJY_API.id)
+  if (existingIdx >= 0) {
+    userApis[existingIdx] = BUILTIN_CJY_API
+  } else {
     userApis.unshift(BUILTIN_CJY_API)
-    void saveData(userApiPrefix, userApis)
   }
+  void saveData(userApiPrefix, userApis)
 
   // 移除 1.7.1 及之前版本的脚本数据被意外存储到列表中的问题
   let updated = false

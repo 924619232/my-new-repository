@@ -24,7 +24,7 @@ export interface DspState {
   virtualizer: number
 }
 
-const STORAGE_KEY = '@cjy_dsp_settings'
+const STORAGE_KEY = '@dsp_settings'
 
 const DEFAULT_BANDS: BandInfo[] = [
   { band: 0, centerFreq: 31, level: 0 },

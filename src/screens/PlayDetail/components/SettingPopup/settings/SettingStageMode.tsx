@@ -5,7 +5,7 @@ import styles from './style'
 import CheckBox from '@/components/common/CheckBox'
 import { getData, saveData } from '@/plugins/storage'
 
-export const STAGE_STORAGE_KEY = 'cjy_player_stage_mode'
+export const STAGE_STORAGE_KEY = 'player_stage_mode'
 export type StageMode = 'vinyl' | 'cassette' | 'cd' | 'vu' | 'classic'
 
 const STAGE_LIST: Array<{ id: StageMode; name: string }> = [

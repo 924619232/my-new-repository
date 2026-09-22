@@ -30,8 +30,8 @@ export const FloatingMiniPlayer: React.FC<FloatingMiniPlayerProps> = ({
   const liveMusicInfo = usePlayerMusicInfo()
   const liveIsPlaying = useIsPlay()
 
-  const currentTitle = title || liveMusicInfo.name || 'CJY 臻品音频'
-  const currentArtist = artist || liveMusicInfo.singer || '国内秒播直解'
+  const currentTitle = title || liveMusicInfo.name || '洛雪音乐'
+  const currentArtist = artist || liveMusicInfo.singer || '听你想听'
   const currentPic = picUrl || liveMusicInfo.pic
   const currentPlaying = isPlaying !== undefined ? isPlaying : liveIsPlaying
 

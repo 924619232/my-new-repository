@@ -135,7 +135,7 @@ export default () => {
             ) : (
               <>
                 <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>
-                  {titleMap[activeId] || 'CJY 音乐'}
+                  {titleMap[activeId] || '洛雪音乐'}
                 </Text>
                 {activeId !== 'nav_setting' ? (
                   <View style={styles.rightActionRow}>
