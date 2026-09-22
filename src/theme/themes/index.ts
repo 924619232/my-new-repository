@@ -8,7 +8,7 @@ import { isUrl } from '@/utils'
 import { privateStorageDirectoryPath } from '@/utils/fs'
 import { type ImageSourcePropType } from 'react-native'
 
-export const themes = [obsidianGlassTheme, ...rawThemes.filter(t => t.id !== 'obsidian_glass')]
+export const themes = rawThemes
 
 export const BG_IMAGES = {
   'china_ink.jpg': require('./images/china_ink.jpg') as ImageSourcePropType,

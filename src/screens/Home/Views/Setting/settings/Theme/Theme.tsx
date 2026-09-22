@@ -5,7 +5,7 @@ import { useI18n } from '@/lang'
 import { useSettingValue } from '@/store/setting/hook'
 import { useTheme } from '@/store/theme/hook'
 import { updateSetting } from '@/core/common'
-import { getTheme, BG_IMAGES, getAllThemes, type LocalTheme } from '@/theme/themes'
+import { getTheme, BG_IMAGES, getAllThemes, buildActiveThemeColors, type LocalTheme } from '@/theme/themes'
 import themeState from '@/store/theme/state'
 import Text from '@/components/common/Text'
 import { createStyle, getIsSupportedAutoTheme } from '@/utils/tools'
@@ -24,23 +24,39 @@ const THEME_CATEGORIES: ThemeCategory[] = [
   { id: 'cyber', name: '🚀 赛博未来', themeIds: ['cyberpunk_neon', 'cosmic_nebula', 'eva_mecha', 'sakura_dusk'] },
   { id: 'oriental', name: '🏯 东方雅韵', themeIds: ['song_celadon', 'bamboo_mist', 'forbidden_city'] },
   { id: 'daytime', name: '☀️ 日间雅致', themeIds: ['silk_ivory', 'monet_garden', 'okinawa_salt'] },
+  { id: 'classic', name: '📻 官方经典', themeIds: ['green', 'blue', 'orange', 'red', 'purple', 'black', 'grey', 'blue_plus', 'pink', 'brown'] },
 ]
 
 const THEME_SUBTITLES: Record<string, string> = {
   obsidian_glass: 'OLED 旗舰 · 翡翠星芒',
-  silk_ivory: '皓月凝霜 · 象牙玉瓷',
+  silk_ivory: '皓月凝霜 · 象牙白瓷',
   braun_bauhaus: '工业设计 · 极简橙灰',
   retro_walkman: '随身听 1980 · 暖琥珀',
   cyberpunk_neon: '银翼杀手 · 霓虹青紫',
-  cosmic_nebula: '星际漫游 · 星云洋红',
-  sakura_dusk: '新海诚物语 · 晚樱暮粉',
+  cosmic_nebula: '宇宙深空 · 星际漫游',
+  sakura_dusk: '晚樱落月 · 新海诚物语',
   eva_mecha: '初号机觉醒 · 泛用机甲',
-  song_celadon: '千里江山 · 汝窑青翠',
-  bamboo_mist: '苍翠江南 · 幽竹清风',
-  forbidden_city: '紫禁朱雀 · 故宫金丹',
+  song_celadon: '千里江山 · 青绿天青',
+  bamboo_mist: '竹影清风 · 苍翠江南',
+  forbidden_city: '紫禁朱雀 · 故宫丹心',
   teenage_op1: '合成器工程 · 灵感洋红',
-  monet_garden: '塞纳睡莲 · 鸢尾靛蓝',
-  okinawa_salt: '海盐薄荷 · 晴空微风',
+  monet_garden: '莫奈花园 · 塞纳睡莲',
+  okinawa_salt: '冲绳海浪 · 盐系薄荷',
+  green: '官方经典 · 绿意盎然',
+  blue: '官方经典 · 蓝田生玉',
+  blue_plus: '官方经典 · 蛋雅深蓝',
+  orange: '官方经典 · 橙黄橘绿',
+  brown: '官方经典 · 泥牛入海',
+  red: '官方经典 · 热情似火',
+  pink: '官方经典 · 粉装玉琢',
+  purple: '官方经典 · 重斤球紫',
+  grey: '官方经典 · 灰常美丽',
+  ming: '官方经典 · 青出于黑',
+  blue2: '官方经典 · 清热板蓝',
+  black: '官方经典 · 黑灯瞎火',
+  mid_autumn: '官方典藏 · 月里嫦娥',
+  naruto: '官方典藏 · 木叶之村',
+  happy_new_year: '官方典藏 · 新年快乐',
 }
 
 const THEME_STYLE_BADGES: Record<string, string> = {
@@ -50,14 +66,29 @@ const THEME_STYLE_BADGES: Record<string, string> = {
   retro_walkman: '复古磁带',
   cyberpunk_neon: '赛博霓虹',
   cosmic_nebula: '深空星云',
-  sakura_dusk: '日漫新海',
+  sakura_dusk: '晚樱暮色',
   eva_mecha: '机甲战线',
   song_celadon: '千里江山',
-  bamboo_mist: '青竹幽境',
-  forbidden_city: '朱红宫阙',
+  bamboo_mist: '苍翠竹影',
+  forbidden_city: '故宫朱红',
   teenage_op1: '合成机控',
   monet_garden: '印象睡莲',
   okinawa_salt: '海盐清风',
+  green: '清雅翠绿',
+  blue: '宝石纯蓝',
+  blue_plus: '深邃群青',
+  orange: '暖阳橘黄',
+  brown: '温润棕褐',
+  red: '热烈丹红',
+  pink: '柔嫩桃粉',
+  purple: '高雅罗兰',
+  grey: '冷峻银灰',
+  ming: '墨黑玄青',
+  blue2: '靛蓝清波',
+  black: '极夜曜黑',
+  mid_autumn: '月夜中秋',
+  naruto: '赤红木叶',
+  happy_new_year: '新春贺岁',
 }
 
 interface ThemeInfo {
@@ -209,15 +240,15 @@ export default memo(() => {
       <View style={styles.themeGrid}>
         {filteredThemes.map(t => {
           const isActive = activeThemeId === t.id
-          const colors = t.config.themeColors || {}
-          const primaryColor = colors['c-primary'] || '#10b981'
-          const primaryDark = colors['c-primary-dark-100'] || primaryColor
-          const mainBg = colors['c-main-background'] || (t.isDark ? '#0b0f17' : '#f8fafc')
-          const fontColor = colors['c-font'] || (t.isDark ? '#f8fafc' : '#0f172a')
-          const fontLabel = colors['c-font-label'] || (t.isDark ? '#94a3b8' : '#64748b')
+          const palette = buildActiveThemeColors(t)
+          const primaryColor = palette['c-primary'] || '#10b981'
+          const primaryDark = palette['c-primary-dark-100'] || primaryColor
+          const mainBg = palette['c-main-background'] || (t.isDark ? '#0b0f17' : '#f8fafc')
+          const fontColor = palette['c-font'] || (t.isDark ? '#f8fafc' : '#0f172a')
+          const fontLabel = palette['c-font-label'] || (t.isDark ? '#94a3b8' : '#64748b')
           const isDarkTheme = t.isDark
-          const bgImage = t.config.extInfo?.['bg-image'] ? BG_IMAGES[t.config.extInfo['bg-image']] : undefined
-          const subtitle = THEME_SUBTITLES[t.id] || (isDarkTheme ? '深色声学风格' : '浅色纯净风格')
+          const bgImage = palette['bg-image']
+          const subtitle = THEME_SUBTITLES[t.id] || (isDarkTheme ? '深色风格' : '浅色风格')
           const badgeText = THEME_STYLE_BADGES[t.id] || (isDarkTheme ? '深色' : '浅色')
 
           return (

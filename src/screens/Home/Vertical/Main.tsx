@@ -292,6 +292,7 @@ const styles = createStyle({
   mainContainer: {
     flex: 1,
     position: 'relative',
+    paddingBottom: 58,
   },
   pagerView: {
     flex: 1,
