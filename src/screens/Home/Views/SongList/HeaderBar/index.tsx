@@ -27,9 +27,6 @@ export interface HeaderBarType {
 }
 
 
-import { TouchableOpacity } from 'react-native'
-import Text from '@/components/common/Text'
-
 export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSortChange, onTagChange, onSourceChange }, ref) => {
   const sortTabRef = useRef<SortTabType>(null)
   const tagRef = useRef<TagType>(null)
@@ -44,17 +41,10 @@ export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSortChange, onTagC
     },
   }), [])
 
-
   return (
     <View style={styles.searchBar}>
       <SortTab ref={sortTabRef} onSortChange={onSortChange} />
       <Tag ref={tagRef} onTagChange={onTagChange} />
-      <TouchableOpacity
-        style={styles.importBtn}
-        onPress={() => global.app_event.showPlaylistImportModal()}
-      >
-        <Text size={12} color="#10b981" style={{ fontWeight: 'bold' }}>+导入歌单</Text>
-      </TouchableOpacity>
       <SourceSelector ref={sourceSelectorRef} onSourceChange={onSourceChange} />
     </View>
   )
@@ -70,10 +60,5 @@ const styles = createStyle({
   },
   selector: {
     width: 86,
-  },
-  importBtn: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 8,
   },
 })

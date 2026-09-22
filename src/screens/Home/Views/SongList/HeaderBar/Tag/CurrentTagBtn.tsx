@@ -24,9 +24,12 @@ export default forwardRef<CurrentTagBtnType, CurrentTagBtnProps>(({ onShowList }
     },
   }))
 
+  const isDefault = !name || name === t('songlist_tag_default') || name === '默认'
+  const displayName = isDefault ? '🏷️ 分类' : `🏷️ ${name}`
+
   return (
     <Button style={styles.btn} onPress={onShowList}>
-      <Text style={styles.sourceMenu}>{name}</Text>
+      <Text style={styles.sourceMenu}>{displayName}</Text>
     </Button>
   )
 })

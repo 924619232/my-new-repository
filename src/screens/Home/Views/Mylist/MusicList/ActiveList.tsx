@@ -71,20 +71,28 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
         style={styles.listSwitchBtn}
         activeOpacity={0.7}
       >
-        <Text style={styles.listNameText} numberOfLines={1}>
+        <Text style={[styles.listNameText, { color: theme['c-font'] }]} numberOfLines={1}>
           {currentListName}
         </Text>
-        <Icon name="dots-vertical" size={14} color="#10b981" />
-        {fetching ? <Loading color="#10b981" style={styles.loading} /> : null}
+        <Icon name="dots-vertical" size={14} color={theme['c-primary']} />
+        {fetching ? <Loading color={theme['c-primary']} style={styles.loading} /> : null}
       </TouchableOpacity>
 
       <View style={styles.rightActions}>
         <TouchableOpacity
-          style={styles.importBtn}
+          style={[
+            styles.importBtn,
+            {
+              backgroundColor: theme['c-primary-alpha-200'] || 'rgba(16, 185, 129, 0.15)',
+              borderColor: theme['c-primary'],
+            },
+          ]}
           onPress={() => global.app_event.showPlaylistImportModal()}
           activeOpacity={0.8}
         >
-          <Text style={styles.importBtnText}>+导入歌单</Text>
+          <Text style={[styles.importBtnText, { color: theme['c-primary-font-active'] || theme['c-primary'] }]}>
+            +导入歌单
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -107,7 +115,6 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   listNameText: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: 'bold',
     marginRight: 6,
@@ -124,12 +131,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
     borderWidth: 1,
-    borderColor: '#10b981',
   },
   importBtnText: {
-    color: '#34d399',
     fontSize: 12,
     fontWeight: 'bold',
   },

@@ -1,7 +1,7 @@
 // Obsidian Glassmorphism Design System for LX Music Android Custom Edition
 export const obsidianGlassTheme: LX.Theme = {
   id: 'obsidian_glass',
-  name: '黑曜石玻璃态 (发烧旗舰)',
+  name: '黑曜星芒 · OLED 旗舰',
   isDark: true,
   isCustom: false,
   config: {
