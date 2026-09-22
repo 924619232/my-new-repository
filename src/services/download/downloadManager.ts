@@ -281,9 +281,10 @@ class DownloadManager {
 
       // 4. 发起下载
       const downloadJob = downloadFile(directUrl, destPath, {
-        onProgress: (p) => {
-          if (p.total > 0) {
-            const pct = Math.floor((p.loaded / p.total) * 100)
+        progressInterval: 250,
+        progress: (p) => {
+          if (p.contentLength > 0) {
+            const pct = Math.floor((p.bytesWritten / p.contentLength) * 100)
             if (task.progress !== pct) {
               task.progress = pct
               this.notify()
@@ -295,7 +296,7 @@ class DownloadManager {
       this.activeJobs.set(task.id, {
         cancel: () => {
           try {
-            downloadJob.cancel()
+            RNFS.stopDownload(downloadJob.jobId)
           } catch {}
         },
       })

@@ -222,7 +222,7 @@ export const getPlayQuality = (highQuality: LX.Quality, musicInfo: LX.Music.Musi
 
     let t = TRY_QUALITYS_LIST
       .slice(TRY_QUALITYS_LIST.indexOf(highQuality as TryQualityType))
-      .find(q => musicInfo.meta._qualitys[q] && list?.includes(q))
+      .find(q => musicInfo.meta?._qualitys?.[q] && list?.includes(q))
 
     if (t) type = t
   }
@@ -251,7 +251,7 @@ export const getOnlineOtherSourceMusicUrl = async({ musicInfos, quality, onToggl
     retryedSource.push(musicInfo.source)
     if (!assertApiSupport(musicInfo.source)) continue
     itemQuality = quality ?? getPlayQuality(settingState.setting['player.playQuality'], musicInfo)
-    if (!musicInfo.meta._qualitys[itemQuality]) continue
+    if (!musicInfo.meta?._qualitys?.[itemQuality]) continue
 
     console.log('try toggle to: ', musicInfo.source, musicInfo.name, musicInfo.singer, musicInfo.interval)
     onToggleSource(musicInfo)

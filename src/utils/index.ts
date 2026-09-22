@@ -26,27 +26,33 @@ export function compareVer(currentVer: string, targetVer: string): -1 | 0 | 1 {
 
 
 export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
-  const meta: Record<string, any> = {
-    songId: oldMusicInfo.songmid, // 歌曲ID，local为文件路径
-    albumName: oldMusicInfo.albumName, // 歌曲专辑名称
-    picUrl: oldMusicInfo.img, // 歌曲图片链接
+  if (!oldMusicInfo) return oldMusicInfo
+  if (oldMusicInfo.meta && (oldMusicInfo.meta._qualitys != null || oldMusicInfo.meta.songId != null || oldMusicInfo.source == 'local')) {
+    return oldMusicInfo
   }
-  const newInfo = {
-    id: `${oldMusicInfo.source as string}_${oldMusicInfo.songmid as string}`,
-    name: oldMusicInfo.name,
-    singer: oldMusicInfo.singer,
-    source: oldMusicInfo.source,
-    interval: oldMusicInfo.interval,
+  const songmid = oldMusicInfo.songmid ?? oldMusicInfo.meta?.songId ?? oldMusicInfo.id ?? ''
+  const meta: Record<string, any> = {
+    songId: songmid, // 歌曲ID，local为文件路径
+    albumName: oldMusicInfo.albumName ?? oldMusicInfo.meta?.albumName ?? '', // 歌曲专辑名称
+    picUrl: oldMusicInfo.img ?? oldMusicInfo.meta?.picUrl ?? '', // 歌曲图片链接
+  }
+  const source = oldMusicInfo.source ?? 'tx'
+  const newInfo: any = {
+    id: `${source}_${songmid}`,
+    name: oldMusicInfo.name ?? '',
+    singer: oldMusicInfo.singer ?? '',
+    source,
+    interval: oldMusicInfo.interval ?? '',
     meta: meta as LX.Music.MusicInfoOnline['meta'],
   }
 
-  if (oldMusicInfo.source == 'local') {
-    meta.filePath = oldMusicInfo.filePath ?? oldMusicInfo.songmid ?? ''
+  if (source == 'local') {
+    meta.filePath = oldMusicInfo.filePath ?? songmid
     meta.ext = oldMusicInfo.ext ?? /\.(\w+)$/.exec(meta.filePath as string)?.[1] ?? ''
   } else {
-    meta.qualitys = oldMusicInfo.types ?? []
-    meta._qualitys = oldMusicInfo._types ?? {}
-    meta.albumId = oldMusicInfo.albumId
+    meta.qualitys = oldMusicInfo.types ?? oldMusicInfo.meta?.qualitys ?? []
+    meta._qualitys = oldMusicInfo._types ?? oldMusicInfo.meta?._qualitys ?? {}
+    meta.albumId = oldMusicInfo.albumId ?? oldMusicInfo.meta?.albumId ?? ''
     if (meta._qualitys?.flac32bit && !meta._qualitys.flac24bit) {
       meta._qualitys.flac24bit = meta._qualitys.flac32bit
       delete meta._qualitys.flac32bit
@@ -57,21 +63,21 @@ export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
       })
     }
 
-    switch (oldMusicInfo.source) {
+    switch (source) {
       case 'kg':
-        meta.hash = oldMusicInfo.hash
-        newInfo.id = oldMusicInfo.songmid + '_' + oldMusicInfo.hash
+        meta.hash = oldMusicInfo.hash ?? oldMusicInfo.meta?.hash ?? ''
+        newInfo.id = (songmid ? `${songmid}_` : '') + (meta.hash || '')
         break
       case 'tx':
-        meta.strMediaMid = oldMusicInfo.strMediaMid
-        meta.albumMid = oldMusicInfo.albumMid
-        meta.id = oldMusicInfo.songId
+        meta.strMediaMid = oldMusicInfo.strMediaMid ?? oldMusicInfo.meta?.strMediaMid ?? ''
+        meta.albumMid = oldMusicInfo.albumMid ?? oldMusicInfo.meta?.albumMid ?? ''
+        meta.id = oldMusicInfo.songId ?? oldMusicInfo.meta?.id ?? songmid
         break
       case 'mg':
-        meta.copyrightId = oldMusicInfo.copyrightId
-        meta.lrcUrl = oldMusicInfo.lrcUrl
-        meta.mrcUrl = oldMusicInfo.mrcUrl
-        meta.trcUrl = oldMusicInfo.trcUrl
+        meta.copyrightId = oldMusicInfo.copyrightId ?? oldMusicInfo.meta?.copyrightId ?? ''
+        meta.lrcUrl = oldMusicInfo.lrcUrl ?? oldMusicInfo.meta?.lrcUrl ?? ''
+        meta.mrcUrl = oldMusicInfo.mrcUrl ?? oldMusicInfo.meta?.mrcUrl ?? ''
+        meta.trcUrl = oldMusicInfo.trcUrl ?? oldMusicInfo.meta?.trcUrl ?? ''
         break
     }
   }
@@ -79,42 +85,45 @@ export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
   return newInfo
 }
 
-export const toOldMusicInfo = (minfo: LX.Music.MusicInfo): any => {
+export const toOldMusicInfo = (minfo: any): any => {
+  if (!minfo) return {}
+  if (!minfo.meta) return minfo
+  const meta = minfo.meta || {}
   const oInfo: Record<string, any> = {
-    name: minfo.name,
-    singer: minfo.singer,
+    name: minfo.name ?? '',
+    singer: minfo.singer ?? '',
     source: minfo.source,
-    songmid: minfo.meta.songId,
-    interval: minfo.interval,
-    albumName: minfo.meta.albumName,
-    img: minfo.meta.picUrl ?? '',
+    songmid: meta.songId ?? minfo.id,
+    interval: minfo.interval ?? '',
+    albumName: meta.albumName ?? '',
+    img: meta.picUrl ?? '',
     typeUrl: {},
   }
   if (minfo.source == 'local') {
-    oInfo.filePath = minfo.meta.filePath
-    oInfo.ext = minfo.meta.ext
+    oInfo.filePath = meta.filePath ?? ''
+    oInfo.ext = meta.ext ?? ''
     oInfo.albumId = ''
     oInfo.types = []
     oInfo._types = {}
   } else {
-    oInfo.albumId = minfo.meta.albumId
-    oInfo.types = minfo.meta.qualitys
-    oInfo._types = minfo.meta._qualitys
+    oInfo.albumId = meta.albumId ?? ''
+    oInfo.types = meta.qualitys ?? []
+    oInfo._types = meta._qualitys ?? {}
 
     switch (minfo.source) {
       case 'kg':
-        oInfo.hash = minfo.meta.hash
+        oInfo.hash = meta.hash
         break
       case 'tx':
-        oInfo.strMediaMid = minfo.meta.strMediaMid
-        oInfo.albumMid = minfo.meta.albumMid
-        oInfo.songId = minfo.meta.id
+        oInfo.strMediaMid = meta.strMediaMid
+        oInfo.albumMid = meta.albumMid
+        oInfo.songId = meta.id ?? meta.songId
         break
       case 'mg':
-        oInfo.copyrightId = minfo.meta.copyrightId
-        oInfo.lrcUrl = minfo.meta.lrcUrl
-        oInfo.mrcUrl = minfo.meta.mrcUrl
-        oInfo.trcUrl = minfo.meta.trcUrl
+        oInfo.copyrightId = meta.copyrightId
+        oInfo.lrcUrl = meta.lrcUrl
+        oInfo.mrcUrl = meta.mrcUrl
+        oInfo.trcUrl = meta.trcUrl
         break
     }
   }
@@ -127,7 +136,8 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo): any => {
  * @param musicInfo
  */
 export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
-  if (musicInfo.source == 'local') return musicInfo
+  if (!musicInfo || musicInfo.source == 'local') return musicInfo
+  if (!musicInfo.meta?._qualitys) return musicInfo
 
   // @ts-expect-error
   if (musicInfo.meta._qualitys.flac32bit && !musicInfo.meta._qualitys.flac24bit) {
@@ -136,11 +146,11 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
     // @ts-expect-error
     delete musicInfo.meta._qualitys.flac32bit
 
-    musicInfo.meta.qualitys = musicInfo.meta.qualitys.map(quality => {
+    musicInfo.meta.qualitys = musicInfo.meta.qualitys?.map(quality => {
       // @ts-expect-error
       if (quality.type == 'flac32bit') quality.type = 'flac24bit'
       return quality
-    })
+    }) ?? []
   }
 
   return musicInfo
