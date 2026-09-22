@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
 import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
-import { togglePlay, playNext } from '@/core/player'
+import { togglePlay, playNext } from '@/core/player/player'
 import { navigations } from '@/navigation'
 import commonState from '@/store/common/state'
 
@@ -39,7 +39,7 @@ export const FloatingMiniPlayer: React.FC<FloatingMiniPlayerProps> = ({
   const handleNext = onNext || (() => playNext())
   const handleOpenDetail = onOpenDetail || (() => {
     if (commonState.componentIds.home) {
-      navigations.pushPlayDetailScreen(commonState.componentIds.home)
+      navigations.pushPlayDetailScreen(commonState.componentIds.home, true)
     }
   })
 

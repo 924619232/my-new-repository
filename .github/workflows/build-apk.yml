@@ -1,4 +1,4 @@
-﻿name: Build & Deploy CJY Music APK
+name: Build & Deploy CJY Music APK
 
 on:
   push:
@@ -36,7 +36,30 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace -x test
+          ./gradlew assembleRelease --no-daemon --stacktrace -x test 2>&1 | tee ../build.log
+
+      - name: Upload Failure Log to OpenList
+        if: failure()
+        env:
+          OPENLIST_URL: "https://pan.cjy.qzz.io"
+          OPENLIST_USER: "admin"
+          OPENLIST_PASS: "Chen924619232"
+        run: |
+          echo "=== LAST 100 LINES OF BUILD LOG ==="
+          tail -n 100 build.log || true
+          TOKEN=$(curl -s -X POST "$OPENLIST_URL/api/auth/login" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Mozilla/5.0" \
+            -d "{\"username\":\"$OPENLIST_USER\",\"password\":\"$OPENLIST_PASS\"}" | jq -r '.data.token')
+          if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+            ENCODED_PATH=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/移动云盘/apps/build_error.log'))")
+            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
+              -H "Authorization: $TOKEN" \
+              -H "File-Path: $ENCODED_PATH" \
+              -H "User-Agent: Mozilla/5.0" \
+              -H "Content-Type: text/plain" \
+              --data-binary @"build.log"
+          fi
 
       - name: Verify Built APK
         run: |
