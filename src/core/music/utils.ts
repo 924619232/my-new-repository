@@ -300,7 +300,7 @@ export const handleGetOnlineMusicUrl = async({ musicInfo, quality, onToggleSourc
 
   // 优先在当前原生平台源内按音质优先级尝试 (目标音质 -> 320k -> 128k)，避免无端换源
   const candidateQualities: LX.Quality[] = [targetQuality]
-  if (targetQuality !== '320k' && (musicInfo.meta._qualitys?.['320k'] || targetQuality === 'flac' || targetQuality === 'flac24bit')) {
+  if (targetQuality !== '320k' && (musicInfo.meta?._qualitys?.['320k'] || targetQuality === 'flac' || targetQuality === 'flac24bit')) {
     candidateQualities.push('320k')
   }
   if (targetQuality !== '128k') {
