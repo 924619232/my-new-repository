@@ -69,8 +69,8 @@ export default () => {
           {
             height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
             paddingTop: statusBarHeight,
-            backgroundColor: theme['c-main-background'] || '#0a0d14',
-            borderBottomColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.08)',
+            backgroundColor: theme['c-main-background'],
+            borderBottomColor: theme['c-border-background'],
           },
         ]}
       >
@@ -107,15 +107,30 @@ export default () => {
           </View>
         ) : (
           <View style={styles.normalHeaderRow}>
-            <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>{titleMap[activeId] || 'CJY 音乐'}</Text>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.searchPill}
-              onPress={handleSearchClick}
-            >
-              <Icon name="search-2" size={14} color="#9ca3af" />
-              <Text style={styles.searchPlaceholder}>搜索音乐、歌手、大碟...</Text>
-            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme['c-font'] || '#ffffff' }]}>
+              {titleMap[activeId] || 'CJY 音乐'}
+            </Text>
+            {activeId === 'nav_songlist' || activeId === 'nav_top' ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.searchPill, { backgroundColor: theme['c-primary-input-background'] || 'rgba(255, 255, 255, 0.08)' }]}
+                onPress={handleSearchClick}
+              >
+                <Icon name="search-2" size={14} color={theme['c-font-label'] || '#9ca3af'} />
+                <Text style={[styles.searchPlaceholder, { color: theme['c-font-label'] || '#9ca3af' }]}>搜索音乐、歌手、大碟...</Text>
+              </TouchableOpacity>
+            ) : activeId === 'nav_love' ? (
+              <View style={styles.rightActionRow}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={styles.headerIconBtn}
+                  onPress={handleSearchClick}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Icon name="search-2" size={20} color={theme['c-font'] || '#ffffff'} />
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         )}
       </View>
@@ -195,5 +210,16 @@ const styles = StyleSheet.create({
     color: '#10b981',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  rightActionRow: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

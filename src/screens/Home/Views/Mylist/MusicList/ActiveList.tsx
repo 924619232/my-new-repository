@@ -86,14 +86,6 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
         >
           <Text style={styles.importBtnText}>+导入歌单</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={onShowSearchBar}
-          activeOpacity={0.7}
-        >
-          <Icon name="search-2" size={16} color="#9ca3af" />
-        </TouchableOpacity>
       </View>
     </View>
   )

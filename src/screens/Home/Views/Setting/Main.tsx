@@ -1,28 +1,14 @@
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
-import Basic from './settings/Basic'
-import Download from './settings/Download'
-import Player from './settings/Player'
-import LyricDesktop from './settings/LyricDesktop'
-import Search from './settings/Search'
-import List from './settings/List'
-import Sync from './settings/Sync'
-import Backup from './settings/Backup'
-import Other from './settings/Other'
-import Version from './settings/Version'
-import About from './settings/About'
+import ThemeSection from './sections/ThemeSection'
+import PlayerSection from './sections/PlayerSection'
+import LibrarySection from './sections/LibrarySection'
+import CommonSection from './sections/CommonSection'
 
 export const SETTING_SCREENS = [
-  'basic',
-  'download',
+  'theme',
   'player',
-  'lyric_desktop',
-  'search',
-  'list',
-  'sync',
-  'backup',
-  'other',
-  'version',
-  'about',
+  'library',
+  'common',
 ] as const
 
 export type SettingScreenIds = typeof SETTING_SCREENS[number]
@@ -46,18 +32,11 @@ const Main = forwardRef<MainType, {}>((props, ref) => {
 
   const component = useMemo(() => {
     switch (id) {
-      case 'download': return <Download />
-      case 'player': return <Player />
-      case 'lyric_desktop': return <LyricDesktop />
-      case 'search': return <Search />
-      case 'list': return <List />
-      case 'sync': return <Sync />
-      case 'backup': return <Backup />
-      case 'other': return <Other />
-      case 'version': return <Version />
-      case 'about': return <About />
-      case 'basic':
-      default: return <Basic />
+      case 'player': return <PlayerSection />
+      case 'library': return <LibrarySection />
+      case 'common': return <CommonSection />
+      case 'theme':
+      default: return <ThemeSection />
     }
   }, [id])
 
@@ -65,3 +44,4 @@ const Main = forwardRef<MainType, {}>((props, ref) => {
 })
 
 export default Main
+

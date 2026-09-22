@@ -15,14 +15,13 @@ import { createUserList, addListMusics, setActiveList } from '@/core/list'
 import listState from '@/store/list/state'
 import { toast } from '@/utils/tools'
 import { resolveKugouDirect } from '@/utils/kugouUniversal'
+import musicSdk from '@/utils/musicSdk'
 
 export interface PlaylistImportModalProps extends Omit<PopupProps, 'children'> {}
 
 export interface PlaylistImportModalType {
   show: () => void
 }
-
-const API_RESOLVE_ENDPOINT = 'https://music.cjy.qzz.io/api/playlist/resolve'
 
 export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((props, ref) => {
   const [visible, setVisible] = useState(false)
@@ -95,7 +94,7 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
         let songs: any[] = []
         let listName = '导入外部歌单'
 
-        // 1. 优先通过客户端国内极速直连解析酷狗歌单 (突破海外频控，全量157首秒级入库)
+        // 1. 酷狗音乐 / GCID 歌单直连 (首选用原生补全请求头的 KugouDirect 提取全量157+首)
         if (targetUrl.includes('kugou.com') || targetUrl.includes('gcid_')) {
           try {
             setStatusMsg('正在通过客户端国内直连全量提取酷狗曲库 (突破10首限制)...')
@@ -107,20 +106,61 @@ export default forwardRef<PlaylistImportModalType, PlaylistImportModalProps>((pr
           } catch (err) {
             console.log('[Kugou client direct error]', err)
           }
+
+          // 酷狗本地 SDK 兜底
+          if (songs.length === 0) {
+            try {
+              setStatusMsg('正在通过客户端原生 SDK 直连解析酷狗曲库...')
+              const kgRes = await musicSdk.kg.songList.getUserListDetail(targetUrl, 1)
+              if (kgRes && kgRes.list && kgRes.list.length > 0) {
+                songs = kgRes.list
+                if (kgRes.info?.name) listName = kgRes.info.name
+              }
+            } catch (err) {
+              console.log('[musicSdk kg fallback error]', err)
+            }
+          }
         }
 
-        // 2. 服务端聚合解析兜底 (网易云/QQ音乐/酷我等)
-        if (songs.length === 0) {
+        // 2. 网易云音乐客户端直连解析
+        else if (targetUrl.includes('163.com') || targetUrl.includes('163cn.tv')) {
           try {
-            setStatusMsg('正在连接云端音源解析中枢...')
-            const resp = await fetch(`${API_RESOLVE_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`)
-            const res = await resp.json()
-            if (res.code === 200 && res.data && Array.isArray(res.data.songs)) {
-              songs = res.data.songs
-              if (res.data.title) listName = res.data.title
+            setStatusMsg('正在通过客户端直连网易云音乐解析...')
+            const wyRes = await musicSdk.wy.songList.getUserListDetail(targetUrl, 1)
+            if (wyRes && wyRes.list && wyRes.list.length > 0) {
+              songs = wyRes.list
+              if (wyRes.info?.name) listName = wyRes.info.name
             }
-          } catch (e) {
-            console.log('[API_RESOLVE error]', e)
+          } catch (err) {
+            console.log('[musicSdk wy error]', err)
+          }
+        }
+
+        // 3. QQ 音乐客户端直连解析
+        else if (targetUrl.includes('qq.com')) {
+          try {
+            setStatusMsg('正在通过客户端直连QQ音乐解析...')
+            const txRes = await musicSdk.tx.songList.getUserListDetail(targetUrl, 1)
+            if (txRes && txRes.list && txRes.list.length > 0) {
+              songs = txRes.list
+              if (txRes.info?.name) listName = txRes.info.name
+            }
+          } catch (err) {
+            console.log('[musicSdk tx error]', err)
+          }
+        }
+
+        // 4. 酷我音乐客户端直连解析
+        else if (targetUrl.includes('kuwo.cn')) {
+          try {
+            setStatusMsg('正在通过客户端直连酷我音乐解析...')
+            const kwRes = await musicSdk.kw.songList.getUserListDetail(targetUrl, 1)
+            if (kwRes && kwRes.list && kwRes.list.length > 0) {
+              songs = kwRes.list
+              if (kwRes.info?.name) listName = kwRes.info.name
+            }
+          } catch (err) {
+            console.log('[musicSdk kw error]', err)
           }
         }
 

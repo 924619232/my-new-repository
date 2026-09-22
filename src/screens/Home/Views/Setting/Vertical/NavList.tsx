@@ -8,6 +8,12 @@ import { SETTING_SCREENS, type SettingScreenIds } from '../Main'
 import { useI18n } from '@/lang'
 import { BorderRadius, BorderWidths } from '@/theme'
 
+const CATEGORY_ICONS: Record<SettingScreenIds, string> = {
+  theme: '🎨',
+  player: '🎧',
+  library: '📁',
+  common: '⚙️',
+}
 
 const ListItem = memo(({ id, activeId, onPress }: {
   onPress: (item: SettingScreenIds) => void
@@ -23,12 +29,27 @@ const ListItem = memo(({ id, activeId, onPress }: {
     onPress(id)
   }
 
+  const icon = CATEGORY_ICONS[id] || ''
+
   return (
-    <View style={{ ...styles.listItem, backgroundColor: active ? theme['c-primary-background-active'] : 'transparent' }}>
-      <TouchableOpacity style={styles.listName} onPress={handlePress}>
-        <Text numberOfLines={1} color={active ? theme['c-primary-font'] : theme['c-font']}>{t(`setting_${id}`)}</Text>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity
+      style={{
+        ...styles.listItem,
+        backgroundColor: active ? theme['c-primary-background-active'] : 'transparent',
+        borderColor: active ? theme['c-primary'] : 'transparent',
+      }}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <Text
+        numberOfLines={1}
+        size={14}
+        color={active ? theme['c-primary-font'] : theme['c-font']}
+        style={active ? styles.activeText : undefined}
+      >
+        {`${icon} ${t(`setting_${id}`)}`}
+      </Text>
+    </TouchableOpacity>
   )
 }, (prevProps, nextProps) => {
   return !!(prevProps.id === nextProps.id &&
@@ -36,7 +57,6 @@ const ListItem = memo(({ id, activeId, onPress }: {
     nextProps.activeId != nextProps.id
   )
 })
-
 
 export default ({ onChangeId }: {
   onChangeId: (id: SettingScreenIds) => void
@@ -52,52 +72,43 @@ export default ({ onChangeId }: {
   }, [])
 
   return (
-    <ScrollView horizontal style={{ ...styles.container, borderBottomColor: theme['c-border-background'] }} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps={'always'}>
-      {
-        SETTING_SCREENS.map(id => <ListItem key={id} id={id} activeId={activeId} onPress={handleChangeId} />)
-      }
-    </ScrollView>
+    <View style={{ ...styles.container, borderBottomColor: theme['c-border-background'] }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps={'always'}
+      >
+        {
+          SETTING_SCREENS.map(id => <ListItem key={id} id={id} activeId={activeId} onPress={handleChangeId} />)
+        }
+      </ScrollView>
+    </View>
   )
 }
 
-
 const styles = createStyle({
   container: {
-    height: 50,
-    flexGrow: 0,
-    flexShrink: 0,
+    height: 48,
     borderBottomWidth: BorderWidths.normal,
-    opacity: 0.7,
   },
   contentContainer: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    padding: 5,
-    // backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    gap: 8,
   },
-  // listContainer: {
-  //   // borderBottomWidth: BorderWidths.normal2,
-  // },
-
   listItem: {
-    // width: '33.33%',
-    height: 40,
-    paddingLeft: 15,
-    paddingRight: 15,
-    // height: 'auto',
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    paddingHorizontal: 5,
-    // paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: BorderRadius.normal,
-    marginBottom: 5,
-    // backgroundColor: 'rgba(0,0,0,0.1)',
-  },
-  listName: {
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
-    // paddingLeft: 5,
-    // backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  activeText: {
+    fontWeight: 'bold',
   },
 })
+

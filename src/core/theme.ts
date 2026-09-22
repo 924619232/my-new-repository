@@ -1,5 +1,5 @@
 import themeActions from '@/store/theme/action'
-import { getTheme } from '@/theme/themes'
+import { getTheme, themes } from '@/theme/themes'
 import { updateSetting } from './common'
 import themeState from '@/store/theme/state'
 
@@ -12,9 +12,19 @@ export const applyTheme = (theme: LX.Theme) => {
 }
 
 export const setTheme = (id: string) => {
-  updateSetting({ 'theme.id': id })
+  const targetTheme = themes.find(t => t.id === id)
+  const updates: Partial<LX.AppSetting> = { 'theme.id': id }
+  if (targetTheme) {
+    if (targetTheme.isDark) {
+      updates['theme.darkId'] = id
+    } else {
+      updates['theme.lightId'] = id
+    }
+  }
+  updateSetting(updates)
   void getTheme().then(theme => {
     if (theme.id == themeState.theme.id) return
     applyTheme(theme)
   })
 }
+

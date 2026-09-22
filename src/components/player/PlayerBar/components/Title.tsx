@@ -1,5 +1,6 @@
 import { View, StyleSheet } from 'react-native'
 import { usePlayerMusicInfo, useIsPlay } from '@/store/player/hook'
+import { useTheme } from '@/store/theme/hook'
 import { useLrcPlay } from '@/plugins/lyric'
 import Text from '@/components/common/Text'
 
@@ -7,6 +8,7 @@ export default ({ isHome }: { isHome?: boolean }) => {
   const musicInfo = usePlayerMusicInfo()
   const isPlay = useIsPlay()
   const lrcInfo = useLrcPlay()
+  const theme = useTheme()
 
   const title = musicInfo.id ? musicInfo.name : 'CJY 臻品音频'
   const singer = musicInfo.id ? (musicInfo.singer || '官方原唱') : '极速直链秒播'
@@ -18,7 +20,7 @@ export default ({ isHome }: { isHome?: boolean }) => {
   return (
     <View style={styles.container} pointerEvents="none">
       <View style={styles.titleRow}>
-        <Text numberOfLines={1} style={styles.titleText}>
+        <Text numberOfLines={1} style={[styles.titleText, { color: theme['c-font'] || '#ffffff' }]}>
           {title}
         </Text>
         <View style={styles.hiResBadge}>
@@ -29,6 +31,7 @@ export default ({ isHome }: { isHome?: boolean }) => {
         numberOfLines={1}
         style={[
           styles.subtitleText,
+          { color: hasLiveLyric ? (theme['c-primary'] || '#34d399') : (theme['c-font-label'] || '#9ca3af') },
           hasLiveLyric ? styles.lyricActiveText : styles.singerMutedText,
         ]}
       >
@@ -49,7 +52,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   titleText: {
-    color: '#ffffff',
     fontSize: 15,
     fontWeight: '700',
     flexShrink: 1,
@@ -72,10 +74,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   lyricActiveText: {
-    color: '#34d399',
     fontWeight: '600',
   },
   singerMutedText: {
-    color: '#9ca3af',
+    opacity: 0.7,
   },
 })

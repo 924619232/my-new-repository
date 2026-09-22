@@ -13,11 +13,12 @@ import { playNext, playPrev } from '@/core/player/player'
 
 const HairlineProgress = () => {
   const { progress } = useProgress()
+  const theme = useTheme()
   const pct = Math.min(Math.max((progress || 0) * 100, 0), 100)
 
   return (
-    <View style={styles.hairlineTrack}>
-      <View style={[styles.hairlineFill, { width: `${pct}%` }]} />
+    <View style={[styles.hairlineTrack, { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)' }]}>
+      <View style={[styles.hairlineFill, { width: `${pct}%`, backgroundColor: theme['c-primary'] }]} />
     </View>
   )
 }
@@ -51,8 +52,14 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
 
   const playerComponent = useMemo(() => (
     <View style={styles.floatingContainer}>
-      <View style={styles.capsule}>
-        {/* Top Hairline Progress Bar with Emerald Accent */}
+      <View style={[
+        styles.capsule,
+        {
+          backgroundColor: theme.isDark ? (theme['c-content-background'] || '#0a0d14') : '#ffffff',
+          borderColor: theme['c-border-background'] || (theme.isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'),
+        },
+      ]}>
+        {/* Top Hairline Progress Bar with Dynamic Accent */}
         <HairlineProgress />
 
         {/* Left & Center Gesture & Tap Area (Cover + Title + Live Lyrics) */}
@@ -93,9 +100,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#0a0d14',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,

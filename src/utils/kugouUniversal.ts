@@ -44,6 +44,9 @@ export const resolveKugouDirect = async (inputStr: string): Promise<{ title: str
       headers: {
         Referer: 'https://m3ws.kugou.com/share/index.php',
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X)',
+        mid: nowMs,
+        dfid: '-',
+        clienttime: nowMs,
       },
     })
     const rSong = await rSongResp.json()

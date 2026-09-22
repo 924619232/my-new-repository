@@ -74,7 +74,7 @@ const defaultSetting: LX.AppSetting = {
 
   // 'theme.id': 'blue_plus',
   'theme.id': 'obsidian_glass',
-  'theme.lightId': 'obsidian_glass',
+  'theme.lightId': 'silk_ivory',
   'theme.darkId': 'obsidian_glass',
   'theme.hideBgDark': false,
   'theme.dynamicBg': true,

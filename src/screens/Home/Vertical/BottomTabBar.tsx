@@ -32,14 +32,14 @@ export const BottomTabBar: React.FC = () => {
       style={[
         styles.container,
         {
-          backgroundColor: theme['c-main-background'] || 'rgba(18, 22, 32, 0.95)',
-          borderTopColor: theme['c-border-background'] || 'rgba(255, 255, 255, 0.06)',
+          backgroundColor: theme['c-main-background'],
+          borderTopColor: theme['c-border-background'],
         },
       ]}
     >
       {TABS.map(tab => {
         const isActive = activeId === tab.id
-        const color = isActive ? '#10b981' : '#6b7280'
+        const color = isActive ? theme['c-primary'] : (theme['c-font-label'] || '#6b7280')
 
         return (
           <TouchableOpacity

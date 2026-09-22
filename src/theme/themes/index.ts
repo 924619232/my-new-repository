@@ -93,43 +93,38 @@ export const buildActiveThemeColors = (theme: LX.Theme): LX.ActiveTheme => {
     'c-button-background-hover': theme.config.themeColors['c-primary-light-300-alpha-600'],
     'c-button-background-active': theme.config.themeColors['c-primary-light-100-alpha-600'],
     'c-list-header-border-bottom': theme.config.themeColors['c-primary-alpha-900'],
-    'c-content-background': (theme.id === 'obsidian_glass' || theme.isDark) ? '#0a0d14' : theme.config.themeColors['c-primary-light-1000'],
-    'c-main-background': (theme.id === 'obsidian_glass' || theme.isDark) ? '#0a0d14' : ((theme.config.extInfo as any)['c-main-background'] || 'rgba(255, 255, 255, 0.9)'),
-    'c-border-background': (theme.id === 'obsidian_glass' || theme.isDark) ? 'rgba(255, 255, 255, 0.08)' : theme.config.themeColors['c-primary-light-100-alpha-700'],
+    'c-content-background': theme.isDark
+      ? ((theme.config.extInfo as any)['c-main-background'] || '#0a0d14')
+      : ((theme.config.extInfo as any)['c-main-background'] || '#ffffff'),
+    'c-main-background': theme.isDark
+      ? ((theme.config.extInfo as any)['c-main-background'] || '#0a0d14')
+      : ((theme.config.extInfo as any)['c-main-background'] || '#ffffff'),
+    'c-border-background': theme.isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
     'bg-image': bgImg,
   } as const
 }
 
 
-// const copyTheme = (theme: LX.Theme): LX.Theme => {
-//   return {
-//     ...theme,
-//     config: {
-//       ...theme.config,
-//       extInfo: { ...theme.config.extInfo },
-//       themeColors: { ...theme.config.themeColors },
-//     },
-//   }
-// }
-// type IDS = LocalTheme['id']
 export const getTheme = async() => {
-  // fs.promises.readdir()
   const shouldUseDarkColors = themeState.shouldUseDarkColors
-  // let themeId = settingState.setting['theme.id'] == 'auto'
-  //   ? shouldUseDarkColors
-  //     ? settingState.setting['theme.darkId']
-  //     : settingState.setting['theme.lightId']
-  //   // : 'china_ink'
-  //   : settingState.setting['theme.id']
-  let themeId = settingState.setting['theme.id']
-  if (!themeId || themeId === 'green') themeId = 'obsidian_glass'
-  let theme: LocalTheme | LX.Theme | undefined = themes.find(theme => theme.id == themeId)
+  const isAutoTheme = settingState.setting['common.isAutoTheme']
+
+  let themeId: string
+  if (isAutoTheme) {
+    themeId = shouldUseDarkColors
+      ? (settingState.setting['theme.darkId'] || 'obsidian_glass')
+      : (settingState.setting['theme.lightId'] || 'silk_ivory')
+  } else {
+    themeId = settingState.setting['theme.id'] || 'obsidian_glass'
+  }
+
+  let theme: LocalTheme | LX.Theme | undefined = themes.find(t => t.id == themeId)
   if (!theme) {
     userThemes = await getUserTheme()
-    theme = userThemes.find(theme => theme.id == themeId)
+    theme = userThemes.find(t => t.id == themeId)
     if (!theme) {
-      themeId = 'obsidian_glass'
-      theme = themes.find(theme => theme.id == themeId) as LX.Theme
+      themeId = shouldUseDarkColors ? 'obsidian_glass' : 'silk_ivory'
+      theme = themes.find(t => t.id == themeId) as LX.Theme
     }
   }
 
