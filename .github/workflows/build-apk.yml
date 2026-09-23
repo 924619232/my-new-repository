@@ -112,6 +112,33 @@ jobs:
               -H "Content-Type: application/octet-stream" \
               --data-binary @"$APK_PATH" || echo "Local versioned upload notice"
 
+            echo "1.1 Generating and deploying version.json for in-app online updates..."
+            python3 -c "
+import json, os, subprocess
+ver = '$VER_NAME'
+code = '$VER_CODE'
+try:
+    commit_msg = subprocess.check_output(['git', 'log', '-1', '--pretty=%B']).decode('utf-8', errors='ignore').strip()
+except Exception:
+    commit_msg = ''
+desc = commit_msg if commit_msg else f'版本更新 v{ver}'
+data = {
+    'version': ver,
+    'desc': desc,
+    'downloadUrl': '$OPENLIST_URL/d/local/apps/$APK_NAME',
+    'history': []
+}
+with open('version.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+"
+            ENCODED_LOCAL_VER_JSON=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/local/apps/version.json'))")
+            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
+              -H "Authorization: $TOKEN" \
+              -H "File-Path: $ENCODED_LOCAL_VER_JSON" \
+              -H "User-Agent: Mozilla/5.0" \
+              -H "Content-Type: application/json" \
+              --data-binary @"version.json" || echo "Local version.json upload notice"
+
             echo "2. Attempting upload to /移动云盘/apps/..."
             curl -s -X POST "$OPENLIST_URL/api/fs/remove" \
               -H "Authorization: $TOKEN" \
