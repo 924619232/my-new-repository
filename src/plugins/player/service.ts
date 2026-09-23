@@ -113,12 +113,12 @@ const registerPlaybackService = async() => {
   TrackPlayer.addEventListener(TPEvent.PlaybackTrackChanged, async info => {
     // console.log('PlaybackTrackChanged====>', info)
     global.lx.playerTrackId = await getCurrentTrackId()
+    console.log('[PlayerCore] PlaybackTrackChanged trackId:', global.lx.playerTrackId, 'info:', JSON.stringify(info))
     if (info.track == null) return
     if (global.lx.isPlayedStop) return handleExitApp('Timeout Exit')
 
-    // console.log('global.lx.playerTrackId====>', global.lx.playerTrackId)
     if (isEmpty()) {
-      // console.log('====TEMP PAUSE====')
+      console.log('[PlayerCore] PlaybackTrackChanged isEmpty matched, pausing')
       await TrackPlayer.pause()
       global.app_event.playerPause()
       global.app_event.pause()

@@ -111,8 +111,18 @@ export const isTempTrack = (trackId: string) => /\/\/default$/.test(trackId)
 
 
 export const getCurrentTrackId = async() => {
-  const currentTrackIndex = await TrackPlayer.getCurrentTrack()
-  return list[currentTrackIndex]?.id
+  try {
+    const currentTrackIndex = await TrackPlayer.getCurrentTrack()
+    if (currentTrackIndex == null) return list[0]?.id
+    const queue = await TrackPlayer.getQueue() as LX.Player.Track[]
+    if (queue && queue[currentTrackIndex]) {
+      return queue[currentTrackIndex].id
+    }
+    return list[currentTrackIndex]?.id
+  } catch {
+    const currentTrackIndex = await TrackPlayer.getCurrentTrack()
+    return list[currentTrackIndex]?.id
+  }
 }
 export const getCurrentTrack = async() => {
   const currentTrackIndex = await TrackPlayer.getCurrentTrack()
@@ -142,45 +152,60 @@ export const initTrackInfo = async(musicInfo: LX.Player.PlayMusic, mInfo: LX.Pla
   const tracks = buildTracks(musicInfo)
   await TrackPlayer.add(tracks).then(() => list.push(...tracks))
   const queue = await TrackPlayer.getQueue() as LX.Player.Track[]
-  await TrackPlayer.skip(queue.findIndex(t => t.id == tracks[0].id))
+  const targetIndex = queue.findIndex(t => t.id == tracks[0].id)
+  if (targetIndex !== -1) {
+    await TrackPlayer.skip(targetIndex)
+  }
   delayUpdateMusicInfo(mInfo)
 }
 
 
 const handlePlayMusic = async(musicInfo: LX.Player.PlayMusic, url: string, time: number) => {
-// console.log(tracks, time)
-  const tracks = buildTracks(musicInfo, url)
-  const track = tracks[0]
-  // await updateMusicInfo(track)
-  const currentTrackIndex = await TrackPlayer.getCurrentTrack()
-  await TrackPlayer.add(tracks).then(() => list.push(...tracks))
-  const queue = await TrackPlayer.getQueue() as LX.Player.Track[]
-  await TrackPlayer.skip(queue.findIndex(t => t.id == track.id))
+  try {
+    console.log('[PlayerCore] handlePlayMusic begin:', musicInfo.name, 'url:', url.substring(0, 80))
+    const tracks = buildTracks(musicInfo, url)
+    const track = tracks[0]
+    const currentTrackIndex = await TrackPlayer.getCurrentTrack()
+    await TrackPlayer.add(tracks)
+    list.push(...tracks)
+    const queue = await TrackPlayer.getQueue() as LX.Player.Track[]
+    const targetIndex = queue.findIndex(t => t.id == track.id)
+    console.log('[PlayerCore] queue length:', queue.length, 'targetIndex:', targetIndex, 'currentTrackIndex:', currentTrackIndex)
+    if (targetIndex !== -1) {
+      await TrackPlayer.skip(targetIndex)
+    }
 
-  if (currentTrackIndex == null) {
-    if (!isTempTrack(track.id as string)) {
-      if (time) await TrackPlayer.seekTo(time)
-      if (global.lx.restorePlayInfo) {
-        await TrackPlayer.pause()
-        // let startupAutoPlay = settingState.setting['player.startupAutoPlay']
-        global.lx.restorePlayInfo = null
-
-      // TODO startupAutoPlay
-      // if (startupAutoPlay) store.dispatch(playerAction.playMusic())
-      } else {
+    if (currentTrackIndex == null) {
+      if (!isTempTrack(track.id as string)) {
+        if (time) await TrackPlayer.seekTo(time)
+        if (global.lx.restorePlayInfo) {
+          await TrackPlayer.pause()
+          global.lx.restorePlayInfo = null
+        } else {
+          await TrackPlayer.play()
+        }
+      }
+    } else {
+      if (!isTempTrack(track.id as string)) {
+        if (time) await TrackPlayer.seekTo(time)
         await TrackPlayer.play()
       }
     }
-  } else {
-    await TrackPlayer.pause()
-    if (!isTempTrack(track.id as string)) {
-      await TrackPlayer.seekTo(time)
-      await TrackPlayer.play()
-    }
-  }
 
-  if (queue.length > 2) {
-    void TrackPlayer.remove(Array(queue.length - 2).fill(null).map((_, i) => i)).then(() => list.splice(0, list.length - 2))
+    if (queue.length > 2) {
+      const removeCount = queue.length - 2
+      const removeIndexes = Array(removeCount).fill(null).map((_, i) => i)
+      setTimeout(async() => {
+        try {
+          await TrackPlayer.remove(removeIndexes)
+          list.splice(0, removeCount)
+        } catch (e: any) {
+          console.log('[PlayerCore] clean old queue err:', e?.message || e)
+        }
+      }, 1500)
+    }
+  } catch (err: any) {
+    console.log('[PlayerCore] handlePlayMusic ERROR:', err?.message || err)
   }
 }
 let playPromise = Promise.resolve()
