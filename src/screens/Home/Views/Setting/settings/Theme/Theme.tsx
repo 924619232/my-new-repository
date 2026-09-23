@@ -296,7 +296,6 @@ export default memo(() => {
                 }}>
                   <View style={{ ...styles.miniSearchDot, backgroundColor: primaryColor }} />
                   <View style={{ ...styles.miniSearchLine, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)' }} />
-                  <Text size={7} color={primaryColor} style={styles.miniSearchBadge}>Hi-Res</Text>
                 </View>
 
                 {/* 3. Mini Hero Album Cover & Visual Stage */}

@@ -32,8 +32,7 @@ export const BottomTabBar: React.FC = () => {
       style={[
         styles.container,
         {
-          backgroundColor: 'transparent',
-          borderTopColor: 'transparent',
+          backgroundColor: theme['c-content-background'],
         },
       ]}
     >
@@ -49,7 +48,7 @@ export const BottomTabBar: React.FC = () => {
             onPress={() => handleTabPress(tab.id)}
           >
             <View style={styles.iconWrapper}>
-              <Icon name={tab.icon} size={20} color={color} />
+              <Icon name={tab.icon} size={19} color={color} />
             </View>
             <Text
               style={[
@@ -68,7 +67,7 @@ export const BottomTabBar: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 50,
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -82,13 +81,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapper: {
-    height: 22,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabLabel: {
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 10,
+    marginTop: 1,
     letterSpacing: 0.2,
   },
 })

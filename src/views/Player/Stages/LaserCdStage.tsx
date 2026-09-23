@@ -103,9 +103,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   centerHoleOuter: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 270,
+    height: 270,
+    borderRadius: 135,
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
@@ -114,12 +114,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   centerPic: {
-    width: 150,
-    height: 150,
+    width: 270,
+    height: 270,
   },
   centerFallback: {
-    width: 150,
-    height: 150,
+    width: 270,
+    height: 270,
     backgroundColor: '#0ea5e9',
   },
   centerHoleInner: {

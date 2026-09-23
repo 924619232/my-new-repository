@@ -128,9 +128,6 @@ export default () => {
                 <Text style={[styles.searchCapsulePlaceholder, { color: theme['c-font-label'] }]} numberOfLines={1}>
                   搜索歌曲、歌手、专辑...
                 </Text>
-                <View style={[styles.searchCapsuleBadge, { backgroundColor: theme.isDark ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)' }]}>
-                  <Text style={[styles.searchCapsuleBadgeText, { color: theme['c-primary'] }]}>Hi-Res</Text>
-                </View>
               </TouchableOpacity>
             ) : (
               <>
@@ -195,16 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginLeft: 8,
   },
-  searchCapsuleBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginLeft: 6,
-  },
-  searchCapsuleBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
+
   headerRoundBtn: {
     width: 36,
     height: 36,

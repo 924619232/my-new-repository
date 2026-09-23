@@ -57,18 +57,18 @@ export const VinylStage: React.FC<VinylStageProps> = ({ isPlaying, picUrl }) => 
       {/* Vinyl Disc Body */}
       <View style={styles.discShadow}>
         <Animated.View style={[styles.disc, { transform: [{ rotate: spin }] }]}>
-          {/* Groove Rings */}
-          <View style={styles.grooveRing1} />
-          <View style={styles.grooveRing2} />
-          <View style={styles.grooveRing3} />
-          {/* Center Album Artwork */}
+          {/* Full-bleed Album Artwork covering Vinyl Disc */}
           <View style={styles.centerArtWrapper}>
             {picUrl ? (
               <Image source={{ uri: picUrl }} style={styles.centerArt} />
             ) : (
               <View style={styles.centerArtFallback} />
             )}
-            <View style={styles.spindleHole} />
+            {/* Vinyl Groove Rings & Reflection Overlays */}
+            <View pointerEvents="none" style={styles.grooveRing1} />
+            <View pointerEvents="none" style={styles.grooveRing2} />
+            <View pointerEvents="none" style={styles.grooveRing3} />
+            <View pointerEvents="none" style={styles.spindleHole} />
           </View>
         </Animated.View>
       </View>
@@ -85,16 +85,16 @@ export const VinylStage: React.FC<VinylStageProps> = ({ isPlaying, picUrl }) => 
 
 const styles = StyleSheet.create({
   container: {
-    width: 330,
-    height: 330,
+    width: 320,
+    height: 320,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   discShadow: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 284,
+    height: 284,
+    borderRadius: 142,
     backgroundColor: 'rgba(0,0,0,0.65)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 14 },
@@ -103,94 +103,93 @@ const styles = StyleSheet.create({
     elevation: 14,
   },
   disc: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: '#0f1115',
-    borderWidth: 2,
-    borderColor: '#1e2128',
+    width: 284,
+    height: 284,
+    borderRadius: 142,
+    backgroundColor: '#0c0d11',
+    borderWidth: 3,
+    borderColor: '#181b22',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  centerArtWrapper: {
+    width: 270,
+    height: 270,
+    borderRadius: 135,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  grooveRing1: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+  centerArt: {
+    width: 270,
+    height: 270,
   },
-  grooveRing2: {
+  centerArtFallback: {
+    width: 270,
+    height: 270,
+    backgroundColor: '#10b981',
+  },
+  grooveRing1: {
     position: 'absolute',
     width: 250,
     height: 250,
     borderRadius: 125,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  grooveRing2: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.18)',
   },
   grooveRing3: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.03)',
-  },
-  centerArtWrapper: {
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#181b22',
-  },
-  centerArt: {
-    width: 190,
-    height: 190,
-  },
-  centerArtFallback: {
-    width: 190,
-    height: 190,
-    backgroundColor: '#10b981',
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   spindleHole: {
     position: 'absolute',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#090b0e',
     borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   tonearmWrapper: {
     position: 'absolute',
-    top: 2,
-    right: 15,
+    top: 6,
+    right: 20,
     width: 44,
-    height: 145,
+    height: 140,
     transformOrigin: 'top center' as any,
   },
   tonearmPivot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#374151',
     borderWidth: 2,
     borderColor: '#9ca3af',
   },
   tonearmShaft: {
     width: 4,
-    height: 102,
+    height: 98,
     backgroundColor: '#9ca3af',
-    marginLeft: 10,
+    marginLeft: 9,
   },
   tonearmCartridge: {
     width: 12,
-    height: 20,
+    height: 18,
     backgroundColor: '#f59e0b',
-    marginLeft: 6,
+    marginLeft: 5,
     borderRadius: 2,
   },
 })

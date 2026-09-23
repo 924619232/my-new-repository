@@ -543,8 +543,6 @@ export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
 }
 export const getUserApiScript = async(id: string): Promise<string> => {
   if (id === BUILTIN_CJY_API.id || id === 'cjy_v350_builtin') {
-    const cached = await getData<string>(`${userApiPrefix}${id}`)
-    if (cached && cached.length > 50) return cached
     return builtinSourceScript
   }
   const script = await getData<string>(`${userApiPrefix}${id}`) ?? ''
