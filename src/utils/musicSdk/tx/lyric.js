@@ -257,7 +257,8 @@ export default {
                 qrc_t: 0,
                 roma: 1,
                 roma_t: 0,
-                songID: songId,
+                songID: songId || 0,
+                songMID: mInfo.songmid || '',
                 trans: 1,
                 trans_t: 0,
                 type: -1,
@@ -267,7 +268,7 @@ export default {
         })
         return requestObj.promise.then(({ body }) => {
           // console.log(body)
-          if (body.code != this.successCode || body.req.code != this.successCode) return this.getLyric(songId, ++retryNum)
+          if (body.code != this.successCode || body.req.code != this.successCode) return this.getLyric(mInfo, ++retryNum)
           const data = body.req.data
           return this.parseLyric(data.lyric, data.trans, data.roma)
         })
