@@ -62,7 +62,7 @@ export default async(setting: LX.AppSetting) => {
           if (!target) return
           userApiRequestMap.delete(data.requestKey)
           target.reject(new Error('request timeout'))
-        }, 20_000),
+        }, 3500),
       })
       sendAction('request', data)
     }).finally(() => {

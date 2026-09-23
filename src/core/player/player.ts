@@ -117,7 +117,14 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
       },
     })
   }).then(url => {
-    if (global.lx.isPlayedStop || diffCurrentMusicInfo(musicInfo)) return null
+    if (global.lx.isPlayedStop) {
+      console.log('[PlayerCore] isPlayedStop is true, returning null')
+      return null
+    }
+    if (diffCurrentMusicInfo(musicInfo)) {
+      console.log('[PlayerCore] diffCurrentMusicInfo matched, skipping stale url')
+      return null
+    }
 
     return url
   }).catch(async err => {
@@ -140,7 +147,11 @@ export const setMusicUrl = (musicInfo: LX.Music.MusicInfo | LX.Download.ListItem
   if (cancelDelayRetry) cancelDelayRetry()
   global.lx.gettingUrlId = createGettingUrlId(musicInfo)
   void getMusicPlayUrl(musicInfo, isRefresh).then((url) => {
-    if (!url) return
+    if (!url) {
+      console.log('[PlayerCore] getMusicPlayUrl returned empty/intercepted url for:', musicInfo.name)
+      return
+    }
+    console.log('[PlayerCore] setResource dispatching stream url:', url.substring(0, 100))
     setResource(musicInfo, url, playerState.progress.nowPlayTime)
   }).catch((err: any) => {
     console.log(err)
