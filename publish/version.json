@@ -1,6 +1,7 @@
 {
   "version": "1.9.23",
-  "desc": "【双轨车机FLAC专版 & 在线升级接入】\n- 集成双轨车机 2000k FLAC 真无损直链解析\n- 修复底层播放器队列崩溃与起播Bug\n- 全新支持应用内自建国内直链在线静默升级",
+  "desc": "feat(update): integrate self-hosted in-app online updates, decouple GitHub private repo, bump v1.9.23 (code 100)",
+  "downloadUrl": "https://pan.cjy.qzz.io/d/local/apps/lx-music-cjy-release.apk",
   "history": [
     {
       "version": "1.9.22",
