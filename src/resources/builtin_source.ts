@@ -136,6 +136,13 @@ const resolveCarFlacByMeta = async (songTitle, songArtist) => {
       const isJunk = /(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(itTitle) && !/(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(songTitle);
       if (isJunk) continue;
 
+      // 🛡️【红线一】歌名强校验防伪：候选歌名必须与目标歌名一致，严禁张冠李戴！
+      const targetTitleClean = cleanCoreTitle.toLowerCase().replace(/\s+/g, '');
+      const candTitleClean = itTitle.toLowerCase().replace(/[\(（\[【《〈].*?[\)）\]】》〉]/g, '').replace(/[-_].*$/, '').replace(/\s+/g, '') || itTitle.toLowerCase().replace(/\s+/g, '');
+      if (!candTitleClean.includes(targetTitleClean) && !targetTitleClean.includes(candTitleClean)) {
+        continue; // 歌名不匹配，坚决一票否决！绝不允许将江南强加给明日坐标！
+      }
+
       // 严格歌手强匹配，杜绝张冠李戴（红线一）
       if (cleanFirstArtist) {
         const tA = cleanFirstArtist.toLowerCase();
@@ -143,6 +150,13 @@ const resolveCarFlacByMeta = async (songTitle, songArtist) => {
         const cAA = ((it.AARTIST || '')).toLowerCase();
         if (!cA.includes(tA) && !tA.includes(cA) && !cAA.includes(tA) && !tA.includes(cAA)) {
           continue;
+        }
+        // 若原目标包含合唱/合作方，或歌名完全精准匹配，保留官方合作版本
+        const rawArtistStr = String(songArtist || '');
+        if (!rawArtistStr.includes('&') && !rawArtistStr.includes('/') && !rawArtistStr.includes('、')) {
+          if (candTitleClean !== targetTitleClean && (itArtist.includes('&') || itArtist.includes('/') || itArtist.includes('、'))) {
+            continue;
+          }
         }
       }
 
