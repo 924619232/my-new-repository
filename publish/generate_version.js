@@ -23,7 +23,7 @@ try {
 const data = {
   version: pkg.version,
   desc,
-  downloadUrl: openlistUrl + '/d/local/apps/' + apkName,
+  downloadUrl: 'https://music.cjy.qzz.io/apps/' + apkName,
   history,
 }
 

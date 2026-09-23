@@ -1,6 +1,6 @@
 import { httpGet } from '@/utils/request'
 import { author, name } from '../../package.json'
-import { downloadFile, stopDownload, temporaryDirectoryPath } from '@/utils/fs'
+import { downloadFile, stopDownload, temporaryDirectoryPath, unlink } from '@/utils/fs'
 import { getSupportedAbis, installApk } from '@/utils/nativeModules/utils'
 import { APP_PROVIDER_NAME } from '@/config/constant'
 
@@ -15,6 +15,7 @@ const abis = [
 let latestVersionInfo = null
 
 const address = [
+  ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
   ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
 ]
 
@@ -83,10 +84,14 @@ const noop = (total, download) => {}
 let apkSavePath
 
 export const downloadNewVersion = async(version, onDownload = noop) => {
-  const url = (latestVersionInfo && latestVersionInfo.downloadUrl) || 'https://pan.cjy.qzz.io/d/local/apps/lx-music-cjy-release.apk'
+  const url = (latestVersionInfo && latestVersionInfo.downloadUrl) || 'https://music.cjy.qzz.io/apps/lx-music-cjy-release.apk'
   let savePath = temporaryDirectoryPath + '/lx-music-mobile.apk'
 
   if (downloadJobId) stopDownload(downloadJobId)
+
+  try {
+    await unlink(savePath)
+  } catch (e) {}
 
   const { jobId, promise } = downloadFile(url, savePath, {
     progressInterval: 500,
@@ -94,21 +99,16 @@ export const downloadNewVersion = async(version, onDownload = noop) => {
     readTimeout: 30000,
     begin({ statusCode, contentLength }) {
       onDownload(contentLength, 0)
-      // switch (statusCode) {
-      //   case 200:
-      //   case 206:
-      //     break
-      //   default:
-      //     onDownload(null, contentLength, 0)
-      //     break
-      // }
     },
     progress({ contentLength, bytesWritten }) {
       onDownload(contentLength, bytesWritten)
     },
   })
   downloadJobId = jobId
-  return promise.then(() => {
+  return promise.then((res) => {
+    if (res && res.statusCode && res.statusCode >= 400) {
+      throw new Error(`Download failed with status: ${res.statusCode}`)
+    }
     apkSavePath = savePath
     return updateApp()
   })

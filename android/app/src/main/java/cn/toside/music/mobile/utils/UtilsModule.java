@@ -127,34 +127,43 @@ public class UtilsModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void installApk(String filePath, String fileProviderAuthority, Promise promise) {
-    // https://github.com/mikehardy/react-native-update-apk/blob/master/android/src/main/java/net/mikehardy/rnupdateapk/RNUpdateAPK.java
     File file = new File(filePath);
     if (!file.exists()) {
-      Log.e("Utils", "installApk: file doe snot exist '" + filePath + "'");
-      // FIXME this should take a promise and fail it
-      promise.reject("Utils", "installApk: file doe snot exist '" + filePath + "'");
+      Log.e("Utils", "installApk: file does not exist '" + filePath + "'");
+      promise.reject("Utils", "installApk: file does not exist '" + filePath + "'");
       return;
     }
 
     if (Build.VERSION.SDK_INT >= 24) {
-      // API24 and up has a package installer that can handle FileProvider content:// URIs
       Uri contentUri;
-      try {
-        contentUri = FileProvider.getUriForFile(getReactApplicationContext(), fileProviderAuthority, file);
-      } catch (Exception e) {
-        // FIXME should be a Promise.reject really
-        Log.e("Utils", "installApk exception with authority name '" + fileProviderAuthority + "'", e);
-        promise.reject("Utils", "installApk exception with authority name '" + fileProviderAuthority + "'");
-        return;
-        // throw e;
+      String authority = fileProviderAuthority;
+      if (authority == null || authority.isEmpty() || authority.startsWith("cn.toside.music.mobile")) {
+        authority = reactContext.getPackageName() + ".provider";
       }
-      Intent installApp = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-      installApp.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-      installApp.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      installApp.setData(contentUri);
-      installApp.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, reactContext.getApplicationInfo().packageName);
-      reactContext.startActivity(installApp);
-      promise.resolve(null);
+      try {
+        contentUri = FileProvider.getUriForFile(getReactApplicationContext(), authority, file);
+      } catch (Exception e) {
+        Log.w("Utils", "FileProvider failed with authority: " + authority + ", retrying with packageName.provider");
+        try {
+          authority = reactContext.getPackageName() + ".provider";
+          contentUri = FileProvider.getUriForFile(getReactApplicationContext(), authority, file);
+        } catch (Exception ex) {
+          Log.e("Utils", "installApk exception with authority name '" + authority + "'", ex);
+          promise.reject("Utils", "installApk exception with authority name '" + authority + "': " + ex.getMessage());
+          return;
+        }
+      }
+      try {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+        reactContext.startActivity(intent);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.e("Utils", "installApk startActivity failed: " + e.getMessage(), e);
+        promise.reject("Utils", "installApk startActivity failed: " + e.getMessage());
+      }
     } else {
       // Old APIs do not handle content:// URIs, so use an old file:// style
       String cmd = "chmod 777 " + file;
