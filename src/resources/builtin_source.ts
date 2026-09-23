@@ -67,7 +67,8 @@ const parseKuwoJson = (raw) => {
     return (new Function('return (' + raw + ')'))();
   } catch(e2) {
     try {
-      return (new Function('return (' + raw.replace(/[\r\n\t]/g, ' ') + ')'))();
+      var sanitized = String(raw).replace(new RegExp('[\\\\r\\\\n\\\\t]', 'g'), ' ');
+      return (new Function('return (' + sanitized + ')'))();
     } catch(e3) { return null; }
   }
 };

@@ -82,7 +82,21 @@ export default async(setting: LX.AppSetting) => {
   const handleStateChange = ({ status, errorMessage, info }: InitParams) => {
     // console.log(status, message, info)
     setUserApiStatus(status, errorMessage)
-    if (!info || info.id !== settingState.setting['common.apiSource']) return
+    if (!status) {
+      if (!global.lx.apiInitPromise[1]) global.lx.apiInitPromise[2](false)
+      if (errorMessage) {
+        void tipDialog({
+          message: `${global.i18n.t('user_api__init_failed_alert', { name: info?.name ?? '自定义源' })}\n${errorMessage}`,
+          // selection: true,
+          btnText: global.i18n.t('ok'),
+        })
+      }
+      return
+    }
+    if (!info || info.id !== settingState.setting['common.apiSource']) {
+      if (!global.lx.apiInitPromise[1]) global.lx.apiInitPromise[2](status)
+      return
+    }
     if (status) {
       if (info.sources) {
         let apis: any = {}
@@ -185,14 +199,6 @@ export default async(setting: LX.AppSetting) => {
         global.lx.qualityList = qualitys
         global.lx.apis = apis
         global.state_event.apiSourceUpdated(settingState.setting['common.apiSource'])
-      }
-    } else {
-      if (errorMessage) {
-        void tipDialog({
-          message: `${global.i18n.t('user_api__init_failed_alert', { name: info.name })}\n${errorMessage}`,
-          // selection: true,
-          btnText: global.i18n.t('ok'),
-        })
       }
     }
     if (!global.lx.apiInitPromise[1]) global.lx.apiInitPromise[2](status)

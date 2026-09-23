@@ -11,7 +11,15 @@ export const setApiSource = (apiId: string) => {
   if (global.lx.apiInitPromise[1]) {
     global.lx.apiInitPromise[0] = new Promise(resolve => {
       global.lx.apiInitPromise[1] = false
+      const timer = setTimeout(() => {
+        if (!global.lx.apiInitPromise[1]) {
+          console.warn('apiInitPromise timed out after 5000ms, releasing lock')
+          global.lx.apiInitPromise[1] = true
+          resolve(false)
+        }
+      }, 5000)
       global.lx.apiInitPromise[2] = (result: boolean) => {
+        clearTimeout(timer)
         global.lx.apiInitPromise[1] = true
         resolve(result)
       }
