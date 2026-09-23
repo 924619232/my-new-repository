@@ -5,6 +5,7 @@ import Header from './components/Header'
 // import Aside from './components/Aside'
 // import Main from './components/Main'
 import Player from './Player'
+import PlayQueueModal from '@/components/player/PlayQueueModal'
 import PagerView, { type PagerViewOnPageSelectedEvent } from 'react-native-pager-view'
 import Pic from './Pic'
 import Lyric from './Lyric'
@@ -92,6 +93,7 @@ export default memo(({ componentId }: { componentId: string }) => {
         </View> */}
         <Player />
       </View>
+      <PlayQueueModal />
     </>
   )
 })

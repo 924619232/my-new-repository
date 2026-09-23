@@ -14,6 +14,7 @@ import Pic from './Pic'
 // import ControlBtn from './ControlBtn'
 import Lyric from './Lyric'
 import Player from './Player'
+import PlayQueueModal from '@/components/player/PlayQueueModal'
 import { createStyle } from '@/utils/tools'
 import { marginLeftRaw } from './constant'
 import { useStatusbarHeight } from '@/store/common/hook'
@@ -62,15 +63,12 @@ export default memo(({ componentId }: { componentId: string }) => {
             <Pic componentId={componentId} />
           </View>
           <Player />
-          {/* <View style={styles.controlBtn} nativeID="pageIndicator">
-            <MoreBtn />
-            <ControlBtn />
-          </View> */}
         </View>
         <View style={styles.right}>
           <Lyric />
         </View>
       </View>
+      <PlayQueueModal />
     </PageContent>
   )
 })

@@ -28,6 +28,7 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
   const [visible, setVisible] = useState(false)
   const [queueSongs, setQueueSongs] = useState<LX.Music.MusicInfo[]>([])
   const popupRef = useRef<PopupType>(null)
+  const flatListRef = useRef<FlatList>(null)
   const theme = useTheme()
   const playMusicInfo = usePlayMusicInfo()
 
@@ -44,8 +45,22 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
     }
   }, [currentListId])
 
+  const scrollToCurrentMusic = useCallback((songs: LX.Music.MusicInfo[]) => {
+    if (!currentMusicId || !songs.length) return
+    const index = songs.findIndex(s => s.id === currentMusicId)
+    if (index >= 0) {
+      setTimeout(() => {
+        try {
+          flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 })
+        } catch (e) {}
+      }, 150)
+    }
+  }, [currentMusicId])
+
   const showModal = () => {
-    void loadQueue()
+    void loadQueue().then(() => {
+      scrollToCurrentMusic(queueSongs)
+    })
     if (visible) popupRef.current?.setVisible(true)
     else {
       setVisible(true)
@@ -91,6 +106,12 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
     void loadQueue()
   }
 
+  const handleClearQueue = async () => {
+    if (!currentListId || queueSongs.length === 0) return
+    await removeListMusics(currentListId, queueSongs.map(s => s.id))
+    void loadQueue()
+  }
+
   if (!visible) return null
 
   return (
@@ -113,17 +134,26 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
             </View>
             <Text style={styles.countText}>({queueSongs.length}首)</Text>
           </View>
+          {queueSongs.length > 0 && (
+            <TouchableOpacity style={styles.clearBtn} activeOpacity={0.7} onPress={handleClearQueue}>
+              <Icon name="trash" size={14} color="#ef4444" />
+              <Text style={styles.clearBtnText}>清空</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Songs List */}
         <FlatList
+          ref={flatListRef}
           data={queueSongs}
           keyExtractor={(item, index) => `${item.id}_${index}`}
           showsVerticalScrollIndicator={false}
           style={styles.list}
           contentContainerStyle={styles.listContent}
+          onScrollToIndexFailed={() => {}}
           renderItem={({ item, index }) => {
             const isPlaying = item.id === currentMusicId
+            const alb = item.meta?.album || ''
             return (
               <TouchableOpacity
                 style={[
@@ -153,7 +183,7 @@ export default forwardRef<PlayQueueModalType, PlayQueueModalProps>((props, ref) 
                     {item.name}
                   </Text>
                   <Text style={styles.singerName} numberOfLines={1}>
-                    {item.singer}
+                    {item.singer}{alb ? ` · ${alb}` : ''}
                   </Text>
                 </View>
 
