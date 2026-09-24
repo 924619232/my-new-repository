@@ -19,7 +19,7 @@ export default () => {
       }}
       onPress={handleShowQueue}
     >
-      <Icon name="list-loop" color={theme['c-button-font'] || '#ffffff'} size={20} />
+      <Icon name="menu" color={theme['c-button-font'] || '#ffffff'} size={20} />
     </TouchableOpacity>
   )
 }

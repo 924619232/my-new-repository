@@ -52,13 +52,14 @@ const TogglePlayBtn = () => {
 }
 
 const PlayQueueBtn = () => {
+  const theme = useTheme()
   return (
     <TouchableOpacity
       style={styles.iconBtn}
       activeOpacity={0.6}
       onPress={() => global.app_event.emit('showPlayQueueModal')}
     >
-      <Icon name='list-loop' color='#9ca3af' size={18} />
+      <Icon name='menu' color={theme['c-font'] || '#e5e7eb'} size={20} />
     </TouchableOpacity>
   )
 }

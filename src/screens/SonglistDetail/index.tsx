@@ -7,6 +7,7 @@ import { setComponentId } from '@/core/common'
 import { COMPONENT_IDS } from '@/config/constant'
 import { type ListInfoItem } from '@/store/songlist/state'
 import PlayerBar from '@/components/player/PlayerBar'
+import PlayQueueModal from '@/components/player/PlayQueueModal'
 import { ListInfoContext } from './state'
 
 
@@ -36,6 +37,7 @@ export default ({ componentId, info }: { componentId: string, info: ListInfoItem
         <MusicList ref={musicListRef} componentId={componentId} />
       </ListInfoContext.Provider>
       <PlayerBar />
+      <PlayQueueModal />
     </PageContent>
   )
 }
