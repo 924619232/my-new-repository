@@ -2,7 +2,7 @@ import { memo } from 'react'
 import { View } from 'react-native'
 import Button from '@/components/common/Button'
 
-import { createStyle } from '@/utils/tools'
+import { createStyle, toast } from '@/utils/tools'
 import { pop } from '@/navigation'
 import { useTheme } from '@/store/theme/hook'
 import commonState from '@/store/common/state'
@@ -23,7 +23,7 @@ export default memo(() => {
   }
 
   const handlePlayAll = () => {
-    if (!songlistState.listDetailInfo.info.name) return
+    toast('已切换至当前歌单并开始播放')
     void handlePlay(info.id, info.source, songlistState.listDetailInfo.list)
   }
 

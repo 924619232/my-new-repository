@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
-import { createStyle } from '@/utils/tools'
+import { createStyle, toast } from '@/utils/tools'
 
 import MusicList, { type MusicListType } from '../MusicList'
 import { getLeaderboardSetting, saveLeaderboardSetting } from '@/utils/data'
@@ -63,6 +63,11 @@ export default () => {
     requestAnimationFrame(() => {
       drawer.current?.openDrawer()
     })
+  }
+  const handlePlayAll = () => {
+    if (!boundInfo.current.id) return
+    toast('已切换到当前排行榜并开始播放')
+    void handlePlay(boundInfo.current.id, boardState.listDetailInfo.list)
   }
   const onSourceChange: HeaderBarProps['onSourceChange'] = (source) => {
     boundInfo.current.source = source
@@ -131,7 +136,7 @@ export default () => {
       drawerBackgroundColor={theme['c-content-background']}
     >
       <View style={styles.container}>
-        <HeaderBar ref={headerBarRef} onShowBound={onShowBound} onSourceChange={onSourceChange} />
+        <HeaderBar ref={headerBarRef} onShowBound={onShowBound} onSourceChange={onSourceChange} onPlayAll={handlePlayAll} />
         <MusicList ref={musicListRef} />
       </View>
     </DrawerLayoutFixed>

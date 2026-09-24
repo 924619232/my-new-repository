@@ -61,7 +61,7 @@ const defaultSetting: LX.AppSetting = {
   'search.isShowHotSearch': false,
   'search.isShowHistorySearch': false,
 
-  'list.isClickPlayList': true,
+  'list.isClickPlayList': false,
   'list.isShowSource': true,
   'list.isShowAlbumName': false,
   'list.isShowInterval': true,

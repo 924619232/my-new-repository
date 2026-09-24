@@ -5,7 +5,9 @@ import { useTheme } from '@/store/theme/hook'
 import { useActiveListId, useListFetching } from '@/store/list/hook'
 import listState from '@/store/list/state'
 import { getListPrevSelectId } from '@/utils/data'
-import { setActiveList } from '@/core/list'
+import { setActiveList, getListMusics } from '@/core/list'
+import { playList } from '@/core/player/player'
+import { toast } from '@/utils/tools'
 import Text from '@/components/common/Text'
 import { LIST_IDS } from '@/config/constant'
 import Loading from '@/components/common/Loading'
@@ -48,6 +50,17 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
     global.app_event.changeLoveListVisible(true)
   }
 
+  const handlePlayAll = async() => {
+    const musics = await getListMusics(currentListId)
+    if (!musics.length) {
+      toast('当前列表为空')
+      return
+    }
+    setActiveList(currentListId)
+    void playList(currentListId, 0)
+    toast(`已切换至【${currentListName}】并开始播放`)
+  }
+
   useEffect(() => {
     void getListPrevSelectId().then((id) => {
       setActiveList(id)
@@ -81,6 +94,23 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
       <View style={styles.rightActions}>
         <TouchableOpacity
           style={[
+            styles.playAllBtn,
+            {
+              backgroundColor: theme.isDark ? 'rgba(7, 197, 86, 0.15)' : 'rgba(7, 197, 86, 0.1)',
+              borderColor: theme['c-primary'],
+            },
+          ]}
+          onPress={() => void handlePlayAll()}
+          activeOpacity={0.7}
+        >
+          <Icon name="play" size={12} color={theme['c-primary']} />
+          <Text style={[styles.playAllBtnText, { color: theme['c-primary'] }]}>
+            播放全部
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
             styles.importBtn,
             {
               backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
@@ -90,9 +120,9 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
           onPress={() => global.app_event.showDownloadModal()}
           activeOpacity={0.7}
         >
-          <Icon name="download-2" size={13} color={theme['c-primary']} />
+          <Icon name="download-2" size={12} color={theme['c-primary']} />
           <Text style={[styles.importBtnText, { color: theme['c-font'] }]}>
-            下载管理
+            下载
           </Text>
         </TouchableOpacity>
 
@@ -107,9 +137,9 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
           onPress={() => global.app_event.showPlaylistImportModal()}
           activeOpacity={0.7}
         >
-          <Icon name="download-2" size={13} color={theme['c-primary']} />
+          <Icon name="download-2" size={12} color={theme['c-primary']} />
           <Text style={[styles.importBtnText, { color: theme['c-font'] }]}>
-            导入歌单
+            导入
           </Text>
         </TouchableOpacity>
       </View>
@@ -143,19 +173,32 @@ const styles = StyleSheet.create({
   rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+  },
+  playAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 3,
+  },
+  playAllBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   importBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 14,
     borderWidth: 1,
-    gap: 4,
+    gap: 3,
   },
   importBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   iconBtn: {
