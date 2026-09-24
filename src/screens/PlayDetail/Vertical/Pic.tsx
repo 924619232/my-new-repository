@@ -100,15 +100,16 @@ export default ({ componentId }: { componentId: string }) => {
 
 const styles = createStyle({
   container: {
-    flexGrow: 1,
-    flexShrink: 1,
+    flex: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   stageTouchable: {
+    width: '100%',
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 290,
   },
   content: {
     backgroundColor: 'rgba(0,0,0,0)',

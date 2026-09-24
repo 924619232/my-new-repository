@@ -80,10 +80,10 @@ export default memo(({ componentId }: { componentId: string }) => {
           // onPageScrollStateChanged={onPageScrollStateChanged}
           style={styles.pagerView}
         >
-          <View collapsable={false}>
+          <View collapsable={false} style={styles.page}>
             <Pic componentId={componentId} />
           </View>
-          <View collapsable={false}>
+          <View collapsable={false} style={styles.page}>
             <LyricPage activeIndex={pageIndex} />
           </View>
         </PagerView>
@@ -105,6 +105,11 @@ const styles = createStyle({
   },
   pagerView: {
     flex: 1,
+  },
+  page: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   // pageIndicator: {
   //   flex: 0,

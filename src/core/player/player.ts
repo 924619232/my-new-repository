@@ -26,7 +26,7 @@ import { filterList } from './utils'
 import BackgroundTimer from 'react-native-background-timer'
 import { checkIgnoringBatteryOptimization, checkNotificationPermission, debounceBackgroundTimer } from '@/utils/tools'
 import { LIST_IDS } from '@/config/constant'
-import { addListMusics, removeListMusics } from '@/core/list'
+import { addListMusics, removeListMusics, setActiveList } from '@/core/list'
 import { addDislikeInfo } from '@/core/dislikeList'
 
 // import { checkMusicFileAvailable } from '@renderer/utils/music'
@@ -286,6 +286,7 @@ const handlePlay = async() => {
 export const playListById = async(listId: string, id: string) => {
   const prevListId = playerState.playInfo.playerListId
   setPlayListId(listId)
+  if (listId) setActiveList(listId)
   const musicInfo = getList(listId).find(m => m.id == id)
   if (!musicInfo) return
   setPlayMusicInfo(listId, musicInfo)
@@ -302,6 +303,7 @@ export const playListById = async(listId: string, id: string) => {
 export const playList = async(listId: string, index: number) => {
   const prevListId = playerState.playInfo.playerListId
   setPlayListId(listId)
+  if (listId) setActiveList(listId)
   setPlayMusicInfo(listId, getList(listId)[index])
   if (settingState.setting['player.isAutoCleanPlayedList'] || prevListId != listId) clearPlayedList()
   clearTempPlayeList()

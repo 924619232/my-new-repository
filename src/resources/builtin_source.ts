@@ -1,8 +1,8 @@
-// Auto-generated built-in v3.6.0 domestic direct source
+// Auto-generated built-in v3.7.0 domestic direct source (Decentralized Autonomous Client)
 const builtinSource: string = `/*!
- * @name 官方双轨车载FLAC无损直解 (国内秒播版)
- * @description 科鲁泽车机 + 天宝奇瑞车机 · 2000k FLAC 原生直推 · 100ms 极速秒播
- * @version 3.6.0
+ * @name 官方多轨原生无损直解 (全端去中心化秒播版)
+ * @description 腾讯CgiGetVkey直解 + 车机双轨2000k FLAC原生直推 · 零VPS依赖 · 100ms 极速秒播
+ * @version 3.7.0
  * @author LX
  * @homepage https://music.cjy.qzz.io
  */
@@ -108,6 +108,53 @@ const fetchCarFlacStream = async (cleanRid) => {
     url = await fetchTianbaoCarFlac(cleanRid);
   }
   return url;
+};
+
+// ── 2.1 腾讯音乐官方 CgiGetVkey 原生信令直解 (0ms 零VPS直解通道) ──
+const fetchTencentDirectStream = async (cleanMid) => {
+  if (!cleanMid) return null;
+  const prefixes = ['M500', 'C400', 'M800', 'F000'];
+  for (let i = 0; i < prefixes.length; i++) {
+    const pfx = prefixes[i];
+    const ext = pfx.startsWith('C') ? '.m4a' : (pfx.startsWith('F') ? '.flac' : '.mp3');
+    const filename = pfx + cleanMid + cleanMid + ext;
+    const payload = {
+      comm: { ct: 24, cv: 0 },
+      req: {
+        module: 'vkey.GetVkeyServer',
+        method: 'CgiGetVkey',
+        param: {
+          guid: '10000',
+          songmid: [cleanMid],
+          songtype: [0],
+          uin: '0',
+          loginflag: 1,
+          platform: '20',
+          filename: [filename]
+        }
+      }
+    };
+    try {
+      const { body } = await httpGet('https://u.y.qq.com/cgi-bin/musicu.fcg?data=' + encodeURIComponent(JSON.stringify(payload)), {
+        headers: {
+          'Referer': 'https://y.qq.com/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 2000
+      });
+      const data = typeof body === 'string' ? parseSafeJson(body) : body;
+      const midInfo = data && data.req && data.req.data && data.req.data.midurlinfo && data.req.data.midurlinfo[0];
+      const purl = midInfo && midInfo.purl;
+      const sip = (data && data.req && data.req.data && data.req.data.sip && data.req.data.sip[0]) || 'http://aqqmusic.tc.qq.com/';
+      if (purl && typeof purl === 'string' && purl.length > 0) {
+        let streamUrl = sip + purl;
+        if (streamUrl.startsWith('http://')) streamUrl = streamUrl.replace('http://', 'https://');
+        console.log('[TencentDirect] Hit direct purl:', cleanMid, streamUrl.substring(0, 80));
+        return streamUrl;
+      }
+    } catch (e) {}
+  }
+  return null;
 };
 
 // ── 3. 极速智能原唱匹配搜索 (完全复刻 Web 端 index.html 8858-8908 算法) ──
@@ -219,7 +266,19 @@ const handleMusicUrl = async (songInfo, type, source) => {
     }
   }
 
-  // 3. 针对 QQ 音乐 (src === 'tx')、酷狗、导入歌单等：走全网车载 FLAC 智能直解
+  // 3. 针对 QQ 音乐 (src === 'tx')：优先尝试腾讯官方 CgiGetVkey 原生信令直解 (0ms 零VPS直解)
+  if (src === 'tx') {
+    const txMid = String((songInfo && (songInfo.songmid || songInfo.id || ''))).replace(/^tx_/, '');
+    if (txMid) {
+      const directTxUrl = await fetchTencentDirectStream(txMid);
+      if (directTxUrl) {
+        setCachedUrl(cacheKey, directTxUrl);
+        return directTxUrl;
+      }
+    }
+  }
+
+  // 4. 全网车载 2000k FLAC 智能原唱匹配直解兜底 (0 VPS 依赖，客户端 100% 自主秒推)
   if (title) {
     const flacUrl = await resolveCarFlacByMeta(title, artist);
     if (flacUrl) {
@@ -228,7 +287,7 @@ const handleMusicUrl = async (songInfo, type, source) => {
     }
   }
 
-  throw new Error('车载无损 FLAC 解析未命中');
+  throw new Error('去中心化无损 FLAC 解析未命中');
 };
 
 // ── 5. 歌词解析 ──

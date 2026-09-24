@@ -1,6 +1,6 @@
 {
-  "version": "1.9.25",
-  "desc": "fix(tx): fix QQ music lyric songMID payload and retry argument",
+  "version": "1.9.26",
+  "desc": "1. 修复点击排行榜与歌单歌曲时自动切换到当前列表播放；\n2. 修复黑胶唱机上半部分高度坍塌截断与UI割裂；\n3. 内置音源升级v3.7.0手机客户端去中心化自主直解，零VPS依赖。",
   "downloadUrl": "https://music.cjy.qzz.io/apps/lx-music-cjy-release.apk",
   "history": [
     {

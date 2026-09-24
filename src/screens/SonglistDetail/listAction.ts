@@ -1,4 +1,4 @@
-import { createList, setTempList } from '@/core/list'
+import { createList, setTempList, setActiveList } from '@/core/list'
 import { playList } from '@/core/player/player'
 import { getListDetail, getListDetailAll } from '@/core/songlist'
 import { LIST_IDS } from '@/config/constant'
@@ -16,6 +16,7 @@ export const handlePlay = async(id: string, source: Source, list?: LX.Music.Musi
   if (!list?.length) list = (await getListDetail(id, source, 1)).list
   if (list?.length) {
     await setTempList(listId, [...list])
+    setActiveList(LIST_IDS.TEMP)
     void playList(LIST_IDS.TEMP, index)
     isPlayingList = true
   }
@@ -27,6 +28,7 @@ export const handlePlay = async(id: string, source: Source, list?: LX.Music.Musi
     }
   } else {
     await setTempList(listId, [...fullList])
+    setActiveList(LIST_IDS.TEMP)
     void playList(LIST_IDS.TEMP, index)
   }
 }
