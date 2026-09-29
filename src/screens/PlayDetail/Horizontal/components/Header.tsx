@@ -15,6 +15,7 @@ import Btn from './Btn'
 import SettingPopup, { type SettingPopupType } from '../../components/SettingPopup'
 import DspModal, { type DspModalType } from '../../components/DspModal'
 import DesktopLyricBtn from './DesktopLyricBtn'
+import { searchArtist } from '@/core/search/search'
 
 export const HEADER_HEIGHT = scaleSizeH(_HEADER_HEIGHT)
 
@@ -26,7 +27,11 @@ const Title = () => {
   return (
     <View style={styles.titleContent}>
       <Text numberOfLines={1} style={styles.title} size={14}>{musicInfo.name}</Text>
-      <Text numberOfLines={1} style={styles.title} size={12} color={theme['c-font-label']}>{musicInfo.singer}</Text>
+      <TouchableOpacity onPress={() => { searchArtist(musicInfo.singer) }} activeOpacity={0.7}>
+        <Text numberOfLines={1} style={styles.title} size={12} color={theme['c-font-label']}>
+          {musicInfo.singer ? `${musicInfo.singer} ›` : ''}
+        </Text>
+      </TouchableOpacity>
     </View>
   )
 }

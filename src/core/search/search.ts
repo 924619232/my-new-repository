@@ -37,3 +37,24 @@ export const clearHistoryList = () => {
   void saveSearchHistory(list)
 }
 
+export const searchArtist = (artist?: string) => {
+  if (!artist) return
+  const cleanArtist = String(artist).split(/[/&,，、]/)[0].trim() || String(artist).trim()
+  if (!cleanArtist) return
+  if (global.state_event) {
+    import('@/navigation').then(({ pop }) => {
+      import('@/store/common/state').then(({ default: commonState }) => {
+        if (commonState.componentIds.playDetail) {
+          void pop(commonState.componentIds.playDetail)
+        }
+      })
+    })
+    import('@/core/common').then(({ setNavActiveId }) => {
+      setNavActiveId('nav_search')
+      setTimeout(() => {
+        global.app_event.search(cleanArtist)
+      }, 150)
+    })
+  }
+}
+

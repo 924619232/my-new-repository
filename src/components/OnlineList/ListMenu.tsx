@@ -4,6 +4,7 @@ import Menu, { type Menus, type MenuType, type Position } from '@/components/com
 import { hasDislike } from '@/core/dislikeList'
 import { hasMusicUrlByMusic } from '@/utils/data'
 import handleDownloadMusic from '@/core/music/downloadHelper'
+import { searchArtist } from '@/core/search/search'
 
 export interface SelectInfo {
   musicInfo: LX.Music.MusicInfoOnline
@@ -62,6 +63,7 @@ export default forwardRef<ListMenuType, ListMenuProps>((props: ListMenuProps, re
       { action: 'download', label: '下载 (无损/高品)' },
       { action: 'add', label: t('add_to') },
       { action: 'copyName', label: t('copy_name') },
+      { action: 'searchSinger', label: musicInfo.singer ? `搜索歌手 · ${musicInfo.singer}` : '搜索歌手' },
       { action: 'musicSourceDetail', label: t('music_source_detail') },
       { action: 'removeCache', disabled: !has_url_cache, label: t('list_remove_cache') },
       { action: 'dislike', label: t('dislike'), disabled: hasDislike(musicInfo) },
@@ -96,6 +98,9 @@ export default forwardRef<ListMenuType, ListMenuProps>((props: ListMenuProps, re
         break
       case 'copyName':
         props.onCopyName(selectInfo)
+        break
+      case 'searchSinger':
+        searchArtist(selectInfo.musicInfo.singer)
         break
       case 'musicSourceDetail':
         props.onMusicSourceDetail(selectInfo)

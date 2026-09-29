@@ -53,7 +53,8 @@ export default () => {
   }
   const onPlay: BoardsListProps['onPlay'] = (id) => {
     boundInfo.current.id = id
-    void handlePlay(id, boardState.listDetailInfo.list)
+    const list = boardState.listDetailInfo.id == id ? boardState.listDetailInfo.list : undefined
+    void handlePlay(id, list)
   }
   const onCollect: BoardsListProps['onCollect'] = (id, name) => {
     boundInfo.current.id = id
@@ -67,13 +68,15 @@ export default () => {
   const handlePlayAll = () => {
     if (!boundInfo.current.id) return
     toast('已切换到当前排行榜并开始播放')
-    void handlePlay(boundInfo.current.id, boardState.listDetailInfo.list)
+    const list = boardState.listDetailInfo.id == boundInfo.current.id ? boardState.listDetailInfo.list : undefined
+    void handlePlay(boundInfo.current.id, list)
   }
   const onSourceChange: HeaderBarProps['onSourceChange'] = (source) => {
     boundInfo.current.source = source
     void getBoardsList(source).then(list => {
       const id = list[0].id
       const name = list[0].name
+      boundInfo.current.id = id
       requestAnimationFrame(() => {
         boardsListRef.current?.setList(list, id)
         headerBarRef.current?.setBound(source, id, name ?? 'Unknown')

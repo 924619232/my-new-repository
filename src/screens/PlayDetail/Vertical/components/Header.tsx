@@ -1,6 +1,6 @@
 import { memo, useRef } from 'react'
 
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 
 import { pop } from '@/navigation'
 import StatusBar from '@/components/common/StatusBar'
@@ -13,6 +13,7 @@ import commonState from '@/store/common/state'
 import SettingPopup, { type SettingPopupType } from '../../components/SettingPopup'
 import DspModal, { type DspModalType } from '../../components/DspModal'
 import { useStatusbarHeight } from '@/store/common/hook'
+import { searchArtist } from '@/core/search/search'
 import Btn from './Btn'
 import TimeoutExitBtn from './TimeoutExitBtn'
 
@@ -27,7 +28,11 @@ const Title = () => {
   return (
     <View style={styles.titleContent}>
       <Text numberOfLines={1} style={styles.title}>{musicInfo.name}</Text>
-      <Text numberOfLines={1} style={styles.title} size={12} color={theme['c-font-label']}>{musicInfo.singer}</Text>
+      <TouchableOpacity onPress={() => { searchArtist(musicInfo.singer) }} activeOpacity={0.7}>
+        <Text numberOfLines={1} style={styles.title} size={12} color={theme['c-font-label']}>
+          {musicInfo.singer ? `${musicInfo.singer} ›` : ''}
+        </Text>
+      </TouchableOpacity>
     </View>
   )
 }

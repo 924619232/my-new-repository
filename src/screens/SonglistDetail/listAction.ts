@@ -9,11 +9,15 @@ import { type Source } from '@/store/songlist/state'
 
 const getListId = (id: string, source: LX.OnlineSource) => `${source}__${id}`
 
+let playTaskId = 0
+
 export const handlePlay = async(id: string, source: Source, list?: LX.Music.MusicInfoOnline[], index = 0) => {
+  const currentTaskId = ++playTaskId
   const listId = getListId(id, source)
   let isPlayingList = false
   // console.log(list)
   if (!list?.length) list = (await getListDetail(id, source, 1)).list
+  if (currentTaskId !== playTaskId) return
   if (list?.length) {
     await setTempList(listId, [...list])
     setActiveList(LIST_IDS.TEMP)
@@ -21,6 +25,7 @@ export const handlePlay = async(id: string, source: Source, list?: LX.Music.Musi
     isPlayingList = true
   }
   const fullList = await getListDetailAll(source, id)
+  if (currentTaskId !== playTaskId) return
   if (!fullList.length) return
   if (isPlayingList) {
     if (listState.tempListMeta.id == listId) {

@@ -9,11 +9,15 @@ import { confirmDialog, toMD5, toast } from '@/utils/tools'
 
 const getListId = (id: string) => `board__${id}`
 
+let playTaskId = 0
+
 export const handlePlay = async(id: string, list?: LX.Music.MusicInfoOnline[], index = 0) => {
+  const currentTaskId = ++playTaskId
   let isPlayingList = false
   // console.log(list)
   const listId = getListId(id)
   if (!list?.length) list = (await getListDetail(id, 1)).list
+  if (currentTaskId !== playTaskId) return
   if (list?.length) {
     await setTempList(listId, [...list])
     setActiveList(LIST_IDS.TEMP)
@@ -21,6 +25,7 @@ export const handlePlay = async(id: string, list?: LX.Music.MusicInfoOnline[], i
     isPlayingList = true
   }
   const fullList = await getListDetailAll(id)
+  if (currentTaskId !== playTaskId) return
   if (!fullList.length) return
   if (isPlayingList) {
     if (listState.tempListMeta.id == listId) {

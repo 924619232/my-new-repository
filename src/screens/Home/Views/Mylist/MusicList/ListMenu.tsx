@@ -7,6 +7,7 @@ import { hasMusicUrlByMusic } from '@/utils/data'
 import handleDownloadMusic from '@/core/music/downloadHelper'
 import downloadManager from '@/services/download/downloadManager'
 import { toast } from '@/utils/tools'
+import { searchArtist } from '@/core/search/search'
 
 export interface SelectInfo {
   musicInfo: LX.Music.MusicInfo
@@ -80,6 +81,7 @@ export default forwardRef<ListMenuType, ListMenuProps>((props, ref) => {
       { action: 'changePosition', label: t('change_position') },
       { action: 'toggleSource', label: t('toggle_source') },
       { action: 'copyName', label: t('copy_name') },
+      { action: 'searchSinger', label: musicInfo.singer ? `搜索歌手 · ${musicInfo.singer}` : '搜索歌手' },
       { action: 'musicSourceDetail', disabled: isLocal, label: t('music_source_detail') },
       { action: 'removeCache', disabled: !has_url_cache, label: t('list_remove_cache') },
       // { action: 'musicSearch', label: t('music_search') },
@@ -152,6 +154,9 @@ export default forwardRef<ListMenuType, ListMenuProps>((props, ref) => {
         break
       case 'copyName':
         props.onCopyName(selectInfo)
+        break
+      case 'searchSinger':
+        searchArtist(selectInfo.musicInfo.singer)
         break
       case 'changePosition':
         props.onChangePosition(selectInfo)
