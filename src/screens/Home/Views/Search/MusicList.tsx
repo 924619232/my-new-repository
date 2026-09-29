@@ -11,6 +11,7 @@ import Image from '@/components/common/Image'
 import { BorderWidths } from '@/theme'
 import { toast } from '@/utils/tools'
 import { searchArtist } from '@/core/search/search'
+import { getArtistAvatarUrl } from '@/utils/artistAvatar'
 
 export interface MusicListType {
   loadList: (text: string, source: Source) => void
@@ -266,9 +267,37 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
     return null
   }, [currentQuery, currentSongs, songCount])
 
+  const [onlineAvatar, setOnlineAvatar] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!detectedArtist?.name) {
+      setOnlineAvatar(null)
+      return
+    }
+    if (detectedArtist.avatarUrl) {
+      setOnlineAvatar(detectedArtist.avatarUrl)
+      return
+    }
+    let cancel = false
+    void getArtistAvatarUrl(detectedArtist.name).then((url) => {
+      if (!cancel && url) setOnlineAvatar(url)
+    })
+    return () => {
+      cancel = true
+    }
+  }, [detectedArtist?.name, detectedArtist?.avatarUrl])
+
+  const effectiveArtistInfo = useMemo<DetectedArtistInfo | null>(() => {
+    if (!detectedArtist) return null
+    return {
+      name: detectedArtist.name,
+      avatarUrl: onlineAvatar || detectedArtist.avatarUrl,
+    }
+  }, [detectedArtist, onlineAvatar])
+
   const handleEnterArtist = () => {
-    if (detectedArtist) {
-      searchArtist(detectedArtist.name, detectedArtist.avatarUrl)
+    if (effectiveArtistInfo) {
+      searchArtist(effectiveArtistInfo.name, effectiveArtistInfo.avatarUrl)
     }
   }
 
@@ -281,7 +310,7 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
       <SearchHeader
         onPlayAll={handlePlayAll}
         count={songCount}
-        artistInfo={detectedArtist}
+        artistInfo={effectiveArtistInfo}
         onEnterArtist={handleEnterArtist}
       />
     }

@@ -16,6 +16,7 @@ import Image from '@/components/common/Image'
 import { BorderWidths } from '@/theme'
 import { createStyle, toast } from '@/utils/tools'
 import { handlePlay } from '@/screens/Home/Views/Search/listAction'
+import { getArtistAvatarUrl } from '@/utils/artistAvatar'
 
 export interface ArtistDetailProps {
   componentId: string
@@ -29,8 +30,17 @@ export default ({ componentId, artist, avatarUrl }: ArtistDetailProps) => {
   const listRef = useRef<OnlineListType>(null)
   const [songList, setSongList] = useState<LX.Music.MusicInfoOnline[]>([])
   const [status, setStatus] = useState<'idle' | 'loading' | 'refreshing' | 'error' | 'end'>('loading')
+  const [currentAvatar, setCurrentAvatar] = useState<string | undefined>(avatarUrl)
   const pageRef = useRef(1)
   const isUnmountedRef = useRef(false)
+
+  useEffect(() => {
+    if (!currentAvatar) {
+      void getArtistAvatarUrl(artist).then((url) => {
+        if (!isUnmountedRef.current && url) setCurrentAvatar(url)
+      })
+    }
+  }, [artist, currentAvatar])
 
   const loadSongs = (page: number, append: boolean = false) => {
     if (!append) {
@@ -99,9 +109,9 @@ export default ({ componentId, artist, avatarUrl }: ArtistDetailProps) => {
           <TouchableOpacity onPress={handleBack} style={styles.backBtn} activeOpacity={0.7}>
             <Icon name="chevron-left" size={24} color={theme['c-font']} />
           </TouchableOpacity>
-          {(avatarUrl || songList[0]?.meta?.picUrl) ? (
+          {(currentAvatar || songList[0]?.meta?.picUrl) ? (
             <Image
-              url={avatarUrl || songList[0]?.meta?.picUrl || ''}
+              url={currentAvatar || songList[0]?.meta?.picUrl || ''}
               style={{
                 width: 38,
                 height: 38,
