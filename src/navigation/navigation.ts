@@ -5,6 +5,7 @@ import {
   HOME_SCREEN,
   PLAY_DETAIL_SCREEN,
   SONGLIST_DETAIL_SCREEN,
+  ARTIST_DETAIL_SCREEN,
   COMMENT_SCREEN,
   // SETTING_SCREEN,
 } from './screenNames'
@@ -297,6 +298,39 @@ export function pushSonglistDetailScreen(componentId: string, info: ListInfoItem
               //   },
               // },
             },
+          },
+        },
+      },
+    })
+  })
+}
+export function pushArtistDetailScreen(componentId: string, artist: string) {
+  const theme = themeState.theme
+
+  requestAnimationFrame(() => {
+    void Navigation.push(componentId, {
+      component: {
+        name: ARTIST_DETAIL_SCREEN,
+        passProps: {
+          artist,
+        },
+        options: {
+          topBar: {
+            visible: false,
+            height: 0,
+            drawBehind: false,
+          },
+          statusBar: {
+            drawBehind: true,
+            visible: true,
+            style: getStatusBarStyle(theme.isDark),
+            backgroundColor: 'transparent',
+          },
+          navigationBar: {
+            backgroundColor: theme['c-content-background'],
+          },
+          layout: {
+            componentBackgroundColor: theme['c-content-background'],
           },
         },
       },
