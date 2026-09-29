@@ -34,11 +34,12 @@ export default ({ componentId, artist }: ArtistDetailProps) => {
       listRef.current?.setStatus('loading')
       setStatus('loading')
     }
-    return search(artist, page, 'kw').then((list) => {
+    const source = (searchMusicState.source && searchMusicState.source !== 'all') ? searchMusicState.source : 'kw'
+    return search(artist, page, source).then((list) => {
       if (isUnmountedRef.current) return
       const nextList = append ? [...songList, ...list] : list
       setSongList(nextList)
-      listRef.current?.setList(nextList, append, false)
+      listRef.current?.setList(append ? list : nextList, append, false)
       const nextStatus = list.length < 30 ? 'end' : 'idle'
       setStatus(nextStatus)
       listRef.current?.setStatus(nextStatus)

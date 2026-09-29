@@ -136,27 +136,32 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
   const searchInfoRef = useRef<{ text: string, source: Source }>({ text: '', source: 'kw' })
   const isUnmountedRef = useRef(false)
   const [songCount, setSongCount] = useState(0)
+  const [currentQuery, setCurrentQuery] = useState('')
+  const [currentSongs, setCurrentSongs] = useState<LX.Music.MusicInfoOnline[]>([])
 
   useImperativeHandle(ref, () => ({
     async loadList(text, source) {
       listRef.current?.setList([], false, source == 'all')
       setSongCount(0)
+      setCurrentQuery(text)
+      searchInfoRef.current.text = text
+      searchInfoRef.current.source = source
       if (searchMusicState.searchText == text && searchMusicState.source == source && searchMusicState.listInfos[searchMusicState.source]!.list.length) {
         requestAnimationFrame(() => {
           const list = searchMusicState.listInfos[searchMusicState.source]!.list
           listRef.current?.setList(list, false, source == 'all')
           setSongCount(list.length)
+          setCurrentSongs(list)
         })
       } else {
         listRef.current?.setStatus('loading')
         const page = 1
-        searchInfoRef.current.text = text
-        searchInfoRef.current.source = source
         return search(text, page, source).then((list) => {
           if (isUnmountedRef.current) return
           requestAnimationFrame(() => {
             listRef.current?.setList(list, false, source == 'all')
             setSongCount(list.length)
+            setCurrentSongs(list)
             listRef.current?.setStatus(searchMusicState.listInfos[searchMusicState.source]!.maxPage <= page ? 'end' : 'idle')
           })
         }).catch(() => {
@@ -217,25 +222,27 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
   }
 
   const detectedArtist = useMemo(() => {
-    const query = searchInfoRef.current.text?.trim()
+    const query = (currentQuery || searchInfoRef.current.text || '').trim()
     if (!query) return null
-    const list = searchMusicState.listInfos[searchMusicState.source]?.list ?? []
+    const list = currentSongs.length ? currentSongs : (searchMusicState.listInfos[searchMusicState.source]?.list ?? [])
     if (!list.length) return null
 
-    for (const song of list.slice(0, 6)) {
+    for (const song of list.slice(0, 10)) {
       const s = song.singer?.trim()
       if (!s) continue
-      const firstSinger = s.split(/[/&,，、]/)[0].trim()
-      if (
-        firstSinger.toLowerCase() === query.toLowerCase() ||
-        query.toLowerCase().includes(firstSinger.toLowerCase()) ||
-        firstSinger.toLowerCase().includes(query.toLowerCase())
-      ) {
-        return firstSinger
+      const singers = s.split(/[/&,，、]/).map(it => it.trim()).filter(Boolean)
+      for (const singer of singers) {
+        if (
+          singer.toLowerCase() === query.toLowerCase() ||
+          query.toLowerCase().includes(singer.toLowerCase()) ||
+          singer.toLowerCase().includes(query.toLowerCase())
+        ) {
+          return singer
+        }
       }
     }
     return null
-  }, [songCount, searchMusicState.searchText])
+  }, [currentQuery, currentSongs, songCount])
 
   const handleEnterArtist = () => {
     if (detectedArtist) {

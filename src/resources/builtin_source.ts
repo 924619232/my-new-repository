@@ -1,8 +1,8 @@
-// Auto-generated built-in v3.8.1 domestic direct source (Decentralized Autonomous Client)
+// Auto-generated built-in v3.8.2 domestic direct source (Decentralized Autonomous Client)
 const builtinSource: string = `/*!
  * @name CJY 臻品无损音源 (国内秒播直解版)
  * @description 全球无损母带直推 · 客户端原生车机直解 · 200ms极速起播
- * @version 3.8.1
+ * @version 3.8.2
  * @author CJY
  * @homepage https://music.cjy.qzz.io
  */
@@ -10,7 +10,7 @@ const builtinSource: string = `/*!
 const { EVENT_NAMES, on, send, request } = globalThis.lx;
 
 const API_BASE = "https://music.cjy.qzz.io";
-const CURRENT_VERSION = "3.8.1";
+const CURRENT_VERSION = "3.8.2";
 const SOURCE_URL = API_BASE + "/api/lx/source.js";
 
 // ── 0. 客户端 LRU 内存级缓存 (0ms 瞬间秒切/循环重播) ──
@@ -99,17 +99,22 @@ const fetchKuwoCarFlac = async (kwRid, quality) => {
 
 // ── 2.4 咪咕官方原生流客户端直解（国内端侧对称解密，100% 官方首发与晚会独家原版秒播） ──
 const decryptMiguBytes = (rawBytes) => {
-  if (!rawBytes || rawBytes.length < 5) return null;
-  const MAGIC = [0xab, 0xcd, 0x01];
+  if (!rawBytes) return null;
   const MIGU_KEY = 'Jk8qzuePiJ1qE3mDYhLQ3T73DtDoAhLP';
   let bytes = rawBytes;
-  if (typeof rawBytes === 'string') {
+  if (rawBytes && Array.isArray(rawBytes.data)) {
+    bytes = rawBytes.data;
+  } else if (rawBytes && rawBytes.type === 'Buffer' && Array.isArray(rawBytes.data)) {
+    bytes = rawBytes.data;
+  } else if (typeof rawBytes === 'string') {
     bytes = [];
     for (let i = 0; i < rawBytes.length; i++) bytes.push(rawBytes.charCodeAt(i) & 0xff);
   } else if (rawBytes instanceof Uint8Array || Array.isArray(rawBytes)) {
     bytes = rawBytes;
   }
-  if (bytes && bytes[0] === 0xab && bytes[1] === 0xcd && bytes[2] === 0x01) {
+  if (!bytes || bytes.length < 5) return null;
+
+  if (bytes[0] === 0xab && bytes[1] === 0xcd && bytes[2] === 0x01) {
     const seed = bytes[3];
     const keyCodes = [];
     for (let k = 0; k < MIGU_KEY.length; k++) keyCodes.push(MIGU_KEY.charCodeAt(k));
@@ -162,7 +167,7 @@ const fetchMiguStream = async (songInfo, type) => {
   const targetUrl = 'https://c.musicapp.migu.cn/strategy/listen-url/h5/v2.4?contentId=' + encodeURIComponent(contentId) + '&copyrightId=' + encodeURIComponent(copyrightId) + '&resourceType=' + rtype + '&netType=01&toneFlag=' + tone + '&scene=&lowerQualityContentId=' + encodeURIComponent(contentId);
 
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Origin': 'https://h5.nf.migu.cn',
     'Referer': 'https://h5.nf.migu.cn/',
     'ua': 'Android_migu',
@@ -174,7 +179,7 @@ const fetchMiguStream = async (songInfo, type) => {
   };
 
   try {
-    const { body } = await httpGet(targetUrl, { headers, timeout: 3000 });
+    const { body } = await httpGet(targetUrl, { headers, timeout: 3000, binary: true });
     const data = decryptMiguBytes(body);
     let directUrl = data && data.data && data.data.url;
     if (directUrl && typeof directUrl === 'string' && directUrl.startsWith('http')) {
