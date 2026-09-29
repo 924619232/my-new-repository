@@ -15,7 +15,7 @@ import Text from '@/components/common/Text'
 import Image from '@/components/common/Image'
 import { BorderWidths } from '@/theme'
 import { createStyle, toast } from '@/utils/tools'
-import { handlePlay } from '@/screens/Home/Views/Search/listAction'
+import { handlePlayArtistSong } from './listAction'
 import { getArtistAvatarUrl } from '@/utils/artistAvatar'
 
 export interface ArtistDetailProps {
@@ -82,12 +82,12 @@ export default ({ componentId, artist, avatarUrl }: ArtistDetailProps) => {
       return
     }
     toast(`已开始播放【${artist}】全部单曲`)
-    void handlePlay(songList, 0)
+    void handlePlayArtistSong(artist, songList, 0)
   }
 
   const handlePlayList: OnlineListProps['onPlayList'] = (index) => {
     if (!songList.length) return
-    void handlePlay(songList, index)
+    void handlePlayArtistSong(artist, songList, index)
   }
 
   const handleRefresh = () => {
