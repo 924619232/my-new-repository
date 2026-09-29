@@ -7,6 +7,7 @@ import { handlePlay } from './listAction'
 import { useTheme } from '@/store/theme/hook'
 import { Icon } from '@/components/common/Icon'
 import Text from '@/components/common/Text'
+import Image from '@/components/common/Image'
 import { BorderWidths } from '@/theme'
 import { toast } from '@/utils/tools'
 import { searchArtist } from '@/core/search/search'
@@ -15,19 +16,27 @@ export interface MusicListType {
   loadList: (text: string, source: Source) => void
 }
 
+interface DetectedArtistInfo {
+  name: string
+  avatarUrl?: string
+}
+
 const SearchHeader = ({
   onPlayAll,
   count,
-  artist,
+  artistInfo,
   onEnterArtist,
 }: {
   onPlayAll: () => void
   count: number
-  artist: string | null
+  artistInfo: DetectedArtistInfo | null
   onEnterArtist: () => void
 }) => {
   const theme = useTheme()
-  if (count <= 0 && !artist) return null
+  if (count <= 0 && !artistInfo) return null
+
+  const artist = artistInfo?.name
+  const avatarUrl = artistInfo?.avatarUrl
 
   return (
     <View>
@@ -49,19 +58,31 @@ const SearchHeader = ({
           onPress={onEnterArtist}
           activeOpacity={0.7}
         >
-          <View style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: theme['c-primary'],
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: 12,
-          }}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff' }}>
-              {artist.charAt(0)}
-            </Text>
-          </View>
+          {avatarUrl ? (
+            <Image
+              url={avatarUrl}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                marginRight: 12,
+              }}
+            />
+          ) : (
+            <View style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: theme['c-primary'],
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+            }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#ffffff' }}>
+                {artist.charAt(0)}
+              </Text>
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text size={16} numberOfLines={1} style={{ fontWeight: 'bold', color: theme['c-font'] }}>
@@ -221,7 +242,7 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
     })
   }
 
-  const detectedArtist = useMemo(() => {
+  const detectedArtist = useMemo<DetectedArtistInfo | null>(() => {
     const query = (currentQuery || searchInfoRef.current.text || '').trim()
     if (!query) return null
     const list = currentSongs.length ? currentSongs : (searchMusicState.listInfos[searchMusicState.source]?.list ?? [])
@@ -237,7 +258,8 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
           query.toLowerCase().includes(singer.toLowerCase()) ||
           singer.toLowerCase().includes(query.toLowerCase())
         ) {
-          return singer
+          const avatarUrl = song.meta?.picUrl || (song as any).img || undefined
+          return { name: singer, avatarUrl }
         }
       }
     }
@@ -246,7 +268,7 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
 
   const handleEnterArtist = () => {
     if (detectedArtist) {
-      searchArtist(detectedArtist)
+      searchArtist(detectedArtist.name, detectedArtist.avatarUrl)
     }
   }
 
@@ -259,7 +281,7 @@ export default forwardRef<MusicListType, {}>((props, ref) => {
       <SearchHeader
         onPlayAll={handlePlayAll}
         count={songCount}
-        artist={detectedArtist}
+        artistInfo={detectedArtist}
         onEnterArtist={handleEnterArtist}
       />
     }

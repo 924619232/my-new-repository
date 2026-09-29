@@ -39,14 +39,14 @@ export const clearHistoryList = () => {
   void saveSearchHistory(list)
 }
 
-export const searchArtist = (artist?: string) => {
+export const searchArtist = (artist?: string, avatarUrl?: string) => {
   if (!artist) return
   const cleanArtist = String(artist).split(/[/&,，、]/)[0].trim() || String(artist).trim()
   if (!cleanArtist) return
 
   const targetComponentId = commonState.componentIds.songlistDetail || commonState.componentIds.playDetail || commonState.componentIds.home
   if (targetComponentId) {
-    pushArtistDetailScreen(targetComponentId, cleanArtist)
+    pushArtistDetailScreen(targetComponentId, cleanArtist, avatarUrl)
   }
 }
 

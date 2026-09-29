@@ -7,10 +7,12 @@ import PlayerBar from '@/components/player/PlayerBar'
 import PlayQueueModal from '@/components/player/PlayQueueModal'
 import OnlineList, { type OnlineListType, type OnlineListProps } from '@/components/OnlineList'
 import { search } from '@/core/search/music'
+import searchMusicState from '@/store/search/music/state'
 import { useTheme } from '@/store/theme/hook'
 import { useStatusbarHeight } from '@/store/common/hook'
 import { Icon } from '@/components/common/Icon'
 import Text from '@/components/common/Text'
+import Image from '@/components/common/Image'
 import { BorderWidths } from '@/theme'
 import { createStyle, toast } from '@/utils/tools'
 import { handlePlay } from '@/screens/Home/Views/Search/listAction'
@@ -18,9 +20,10 @@ import { handlePlay } from '@/screens/Home/Views/Search/listAction'
 export interface ArtistDetailProps {
   componentId: string
   artist: string
+  avatarUrl?: string
 }
 
-export default ({ componentId, artist }: ArtistDetailProps) => {
+export default ({ componentId, artist, avatarUrl }: ArtistDetailProps) => {
   const theme = useTheme()
   const statusBarHeight = useStatusbarHeight()
   const listRef = useRef<OnlineListType>(null)
@@ -96,6 +99,31 @@ export default ({ componentId, artist }: ArtistDetailProps) => {
           <TouchableOpacity onPress={handleBack} style={styles.backBtn} activeOpacity={0.7}>
             <Icon name="chevron-left" size={24} color={theme['c-font']} />
           </TouchableOpacity>
+          {(avatarUrl || songList[0]?.meta?.picUrl) ? (
+            <Image
+              url={avatarUrl || songList[0]?.meta?.picUrl || ''}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                marginRight: 8,
+              }}
+            />
+          ) : (
+            <View style={{
+              width: 38,
+              height: 38,
+              borderRadius: 19,
+              backgroundColor: theme['c-primary'],
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8,
+            }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#ffffff' }}>
+                {artist.charAt(0)}
+              </Text>
+            </View>
+          )}
           <View style={styles.titleContent}>
             <Text size={17} numberOfLines={1} style={{ fontWeight: 'bold' }}>{artist}</Text>
             <Text size={11} color={theme['c-font-label']}>

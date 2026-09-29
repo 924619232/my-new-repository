@@ -304,7 +304,7 @@ export function pushSonglistDetailScreen(componentId: string, info: ListInfoItem
     })
   })
 }
-export function pushArtistDetailScreen(componentId: string, artist: string) {
+export function pushArtistDetailScreen(componentId: string, artist: string, avatarUrl?: string) {
   const theme = themeState.theme
 
   requestAnimationFrame(() => {
@@ -313,6 +313,7 @@ export function pushArtistDetailScreen(componentId: string, artist: string) {
         name: ARTIST_DETAIL_SCREEN,
         passProps: {
           artist,
+          avatarUrl,
         },
         options: {
           topBar: {
