@@ -2,6 +2,8 @@ import searchState from '@/store/search/state'
 import searchActions from '@/store/search/action'
 import { getSearchHistory as getSearchHistoryFromStore, saveSearchHistory } from '@/utils/data'
 import settingState from '@/store/setting/state'
+import { pushArtistDetailScreen } from '@/navigation/navigation'
+import commonState from '@/store/common/state'
 
 
 export const setSearchType: typeof searchActions['setSearchType'] = (type) => {
@@ -42,12 +44,10 @@ export const searchArtist = (artist?: string) => {
   const cleanArtist = String(artist).split(/[/&,，、]/)[0].trim() || String(artist).trim()
   if (!cleanArtist) return
 
-  import('@/navigation/navigation').then(({ pushArtistDetailScreen }) => {
-    import('@/store/common/state').then(({ default: commonState }) => {
-      const targetComponentId = commonState.componentIds.playDetail || commonState.componentIds.home || 'home'
-      pushArtistDetailScreen(targetComponentId, cleanArtist)
-    })
-  })
+  const targetComponentId = commonState.componentIds.songlistDetail || commonState.componentIds.playDetail || commonState.componentIds.home
+  if (targetComponentId) {
+    pushArtistDetailScreen(targetComponentId, cleanArtist)
+  }
 }
 
 
