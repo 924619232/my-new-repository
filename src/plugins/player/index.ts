@@ -1,21 +1,22 @@
-import TrackPlayer from 'react-native-track-player'
+import TrackPlayer, { Event } from 'react-native-track-player'
 import { updateOptions, setVolume, setPlaybackRate, migratePlayerCache } from './utils'
 import dspEngine from '@/services/audio/dspEngine'
+import { log } from '@/utils/log'
 
-// const listenEvent = () => {
-//   TrackPlayer.addEventListener('playback-error', err => {
-//     console.log('playback-error', err)
-//   })
-//   TrackPlayer.addEventListener('playback-state', info => {
-//     console.log('playback-state', info)
-//   })
-//   TrackPlayer.addEventListener('playback-track-changed', info => {
-//     console.log('playback-track-changed', info)
-//   })
-//   TrackPlayer.addEventListener('playback-queue-ended', info => {
-//     console.log('playback-queue-ended', info)
-//   })
-// }
+const listenEvent = () => {
+  TrackPlayer.addEventListener(Event.PlaybackError, (err: any) => {
+    log.error('TrackPlayer', 'Playback error encountered:', err)
+  })
+  TrackPlayer.addEventListener(Event.PlaybackState, (state: any) => {
+    log.info('TrackPlayer', 'Playback state changed:', state?.state ?? state)
+  })
+  TrackPlayer.addEventListener(Event.PlaybackTrackChanged, (info: any) => {
+    log.info('TrackPlayer', 'Playback track changed:', info?.nextTrack ?? info)
+  })
+  TrackPlayer.addEventListener(Event.PlaybackQueueEnded, (info: any) => {
+    log.info('TrackPlayer', 'Playback queue ended:', info)
+  })
+}
 
 const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnableAudioOffload }: {
   volume: number
@@ -26,7 +27,7 @@ const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnabl
 }) => {
   if (global.lx.playerStatus.isIniting || global.lx.playerStatus.isInitialized) return
   global.lx.playerStatus.isIniting = true
-  console.log('Cache Size', cacheSize * 1024)
+  log.info('TrackPlayer', 'Initializing player with cache size:', cacheSize * 1024)
   await migratePlayerCache()
   await TrackPlayer.setupPlayer({
     maxCacheSize: cacheSize * 1024,
@@ -42,7 +43,7 @@ const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnabl
   await setVolume(volume)
   await setPlaybackRate(playRate)
   void dspEngine.init().catch(() => {})
-  // listenEvent()
+  listenEvent()
 }
 
 

@@ -1,121 +1,230 @@
-// import { requestStoragePermission } from '@/utils/common'
-import { temporaryDirectoryPath, existsFile, appendFile, unlink, writeFile, readFile } from '@/utils/fs'
+import { privateStorageDirectoryPath, existsFile, appendFile, unlink, writeFile, readFile, mkdir, stat, moveFile } from '@/utils/fs'
 
-const logPath = temporaryDirectoryPath + '/error.log'
-
-const logTools = {
-  tempLog: [] as Array<{ time: string, type: 'LOG' | 'WARN' | 'ERROR', text: string }> | null,
-  writeLog(msg: string) {
-    console.log(msg)
-    void appendFile(logPath, '\n----lx log----\n' + msg)
-  },
-  async initLogFile() {
-    try {
-      let isExists = await existsFile(logPath)
-      // console.log(isExists)
-      if (!isExists) await writeFile(logPath, '')
-      if (this.tempLog?.length) this.writeLog(this.tempLog.map(m => `${m.time} ${m.type} ${m.text}`).join('\n----lx log----\n'))
-      this.tempLog = null
-    } catch (err) {
-      console.log(err)
-    }
-  },
+export interface LogEntry {
+  time: string
+  type: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
+  module: string
+  text: string
 }
 
+const LOG_DIR = privateStorageDirectoryPath + '/logs'
+const LOG_FILE = LOG_DIR + '/lx_debug.log'
+const OLD_LOG_FILE = LOG_DIR + '/lx_debug.old.log'
+const MAX_LOG_SIZE = 3 * 1024 * 1024 // 3MB 轮转阈值
+const RING_BUFFER_SIZE = 300 // 内存常驻最新 300 条
+
+class LogManager {
+  private ringBuffer: LogEntry[] = []
+  private pendingQueue: string[] = []
+  private flushTimer: any = null
+  private isWriting = false
+  private currentFileSize = 0
+  private isInitialized = false
+
+  public async initLogFile() {
+    try {
+      const dirExists = await existsFile(LOG_DIR)
+      if (!dirExists) {
+        await mkdir(LOG_DIR)
+      }
+
+      const fileExists = await existsFile(LOG_FILE)
+      if (!fileExists) {
+        await writeFile(LOG_FILE, `=== LX Music Mobile [Log Edition] Session Started at ${new Date().toISOString()} ===\n`)
+        this.currentFileSize = 100
+      } else {
+        const fileStat = await stat(LOG_FILE)
+        this.currentFileSize = fileStat?.size ?? 0
+      }
+
+      this.isInitialized = true
+      this.flushPending()
+    } catch (err) {
+      console.log('[LogManager] init failed:', err)
+    }
+  }
+
+  public record(type: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR', moduleOrMsg: any, ...rest: any[]) {
+    let module = 'App'
+    let msgs: any[] = []
+
+    if (typeof moduleOrMsg === 'string' && moduleOrMsg.startsWith('[') && moduleOrMsg.endsWith(']')) {
+      module = moduleOrMsg.slice(1, -1)
+      msgs = rest
+    } else if (typeof moduleOrMsg === 'string' && rest.length > 0 && /^[A-Za-z0-9_-]+$/.test(moduleOrMsg)) {
+      module = moduleOrMsg
+      msgs = rest
+    } else {
+      msgs = [moduleOrMsg, ...rest]
+    }
+
+    const text = msgs.map(m => {
+      if (typeof m === 'string') return m
+      if (m instanceof Error) return m.stack ?? `${m.name}: ${m.message}`
+      try {
+        return JSON.stringify(m)
+      } catch {
+        return String(m)
+      }
+    }).join(' ')
+
+    const now = new Date()
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ` +
+                    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.` +
+                    `${String(now.getMilliseconds()).padStart(3, '0')}`
+
+    const entry: LogEntry = {
+      time: timeStr,
+      type,
+      module,
+      text,
+    }
+
+    // 1. 塞入内存环形队列 (RingBuffer)
+    if (this.ringBuffer.length >= RING_BUFFER_SIZE) {
+      this.ringBuffer.shift()
+    }
+    this.ringBuffer.push(entry)
+
+    // 2. 格式化日志文本行
+    const line = `[${timeStr}] [${module}] [${type}] ${text}`
+
+    // 3. 同时输出到 Console
+    if (type === 'ERROR') {
+      console.error(line)
+    } else if (type === 'WARN') {
+      console.warn(line)
+    } else {
+      console.log(line)
+    }
+
+    // 4. 塞入待落盘异步缓冲
+    this.pendingQueue.push(line)
+    if (this.pendingQueue.length >= 20) {
+      void this.flushPending()
+    } else if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => {
+        this.flushTimer = null
+        void this.flushPending()
+      }, 500)
+    }
+  }
+
+  private async checkAndRotate() {
+    if (this.currentFileSize >= MAX_LOG_SIZE) {
+      try {
+        const oldExists = await existsFile(OLD_LOG_FILE)
+        if (oldExists) {
+          await unlink(OLD_LOG_FILE)
+        }
+        await moveFile(LOG_FILE, OLD_LOG_FILE)
+        await writeFile(LOG_FILE, `=== LX Music Mobile [Log Edition] Rotated at ${new Date().toISOString()} ===\n`)
+        this.currentFileSize = 100
+      } catch (e) {
+        console.warn('[LogManager] rotate error:', e)
+      }
+    }
+  }
+
+  private async flushPending() {
+    if (!this.isInitialized || this.isWriting || this.pendingQueue.length === 0) return
+    this.isWriting = true
+    const batch = this.pendingQueue.splice(0, this.pendingQueue.length)
+    const payload = batch.join('\n') + '\n'
+
+    try {
+      await this.checkAndRotate()
+      await appendFile(LOG_FILE, payload)
+      this.currentFileSize += payload.length
+    } catch (err) {
+      console.warn('[LogManager] appendFile error:', err)
+      // 若写入失败，适度放回待写队列前端
+      if (this.pendingQueue.length < 200) {
+        this.pendingQueue.unshift(...batch)
+      }
+    } finally {
+      this.isWriting = false
+      if (this.pendingQueue.length > 0) {
+        setTimeout(() => void this.flushPending(), 200)
+      }
+    }
+  }
+
+  public getRecentMemoryLogs(): LogEntry[] {
+    return [...this.ringBuffer]
+  }
+
+  public async getFullLogs(): Promise<string> {
+    try {
+      let content = ''
+      const oldExists = await existsFile(OLD_LOG_FILE)
+      if (oldExists) {
+        content += await readFile(OLD_LOG_FILE) + '\n--- Log Rotation Boundary ---\n'
+      }
+      const curExists = await existsFile(LOG_FILE)
+      if (curExists) {
+        content += await readFile(LOG_FILE)
+      }
+      return content || (this.ringBuffer.map(e => `[${e.time}] [${e.module}] [${e.type}] ${e.text}`).join('\n'))
+    } catch (e: any) {
+      return `Failed to read logs: ${e.message}\n` + this.ringBuffer.map(e => `[${e.time}] [${e.module}] [${e.type}] ${e.text}`).join('\n')
+    }
+  }
+
+  public async clearAllLogs(): Promise<void> {
+    this.ringBuffer = []
+    this.pendingQueue = []
+    this.currentFileSize = 0
+    try {
+      const curExists = await existsFile(LOG_FILE)
+      if (curExists) await unlink(LOG_FILE)
+      const oldExists = await existsFile(OLD_LOG_FILE)
+      if (oldExists) await unlink(OLD_LOG_FILE)
+      await writeFile(LOG_FILE, `=== LX Music Mobile [Log Edition] Cleared at ${new Date().toISOString()} ===\n`)
+      this.currentFileSize = 100
+    } catch (e) {
+      console.warn('[LogManager] clear error:', e)
+    }
+  }
+
+  public getLogFilePath(): string {
+    return LOG_FILE
+  }
+}
+
+const manager = new LogManager()
+
 export const init = async() => {
-  return logTools.initLogFile()
+  return manager.initLogFile()
 }
 
 export const getLogs = async() => {
-  return readFile(logPath)
+  return manager.getFullLogs()
+}
+
+export const getRecentLogs = () => {
+  return manager.getRecentMemoryLogs()
 }
 
 export const clearLogs = async() => {
-  return unlink(logPath).then(async() => writeFile(logPath, ''))
+  return manager.clearAllLogs()
+}
+
+export const getLogFilePath = () => {
+  return manager.getLogFilePath()
 }
 
 export const log = {
-  info(...msgs: any[]) {
-    // console.info(...msgs)
-    const msg = msgs.map(m => typeof m == 'string' ? m : m instanceof Error ? m.stack ?? m.message : JSON.stringify(m)).join(' ')
-    if (msg.startsWith('%c')) return
-    const time = new Date().toLocaleString()
-    if (logTools.tempLog) {
-      logTools.tempLog.push({ type: 'LOG', time, text: msg })
-    } else logTools.writeLog(`${time} LOG ${msg}`)
+  debug(moduleOrMsg: any, ...msgs: any[]) {
+    manager.record('DEBUG', moduleOrMsg, ...msgs)
   },
-  warn(...msgs: any[]) {
-    // console.warn(...msgs)
-    const msg = msgs.map(m => typeof m == 'string' ? m : m instanceof Error ? m.stack ?? m.message : JSON.stringify(m)).join(' ')
-    const time = new Date().toLocaleString()
-    if (logTools.tempLog) {
-      logTools.tempLog.push({ type: 'WARN', time, text: msg })
-    } else logTools.writeLog(`${time} WARN ${msg}`)
+  info(moduleOrMsg: any, ...msgs: any[]) {
+    manager.record('INFO', moduleOrMsg, ...msgs)
   },
-  error(...msgs: any[]) {
-    const msg = msgs.map(m => typeof m == 'string' ? m : m instanceof Error ? m.stack ?? m.message : JSON.stringify(m)).join(' ')
-    const time = new Date().toLocaleString()
-    if (logTools.tempLog) {
-      logTools.tempLog.push({ type: 'ERROR', time, text: msg })
-    } else {
-      logTools.writeLog(`${time} ERROR ${msg}`)
-    }
+  warn(moduleOrMsg: any, ...msgs: any[]) {
+    manager.record('WARN', moduleOrMsg, ...msgs)
+  },
+  error(moduleOrMsg: any, ...msgs: any[]) {
+    manager.record('ERROR', moduleOrMsg, ...msgs)
   },
 }
-/*
-if (process.env.NODE_ENV !== 'development') {
-  const logPath = externalDirectoryPath + '/debug.log'
-
-  let tempLog = []
-
-  const log = window.console.log
-  const error = window.console.error
-  const warn = window.console.warn
-
-  const writeLog = msg => appendFile(logPath, '\n' + msg)
-
-  window.console.log = (...msgs) => {
-    log(...msgs)
-    const msg = msgs.map(m => typeof m == 'string' ? m : JSON.stringify(m)).join(' ')
-    if (msg.startsWith('%c')) return
-    const time = new Date().toLocaleString()
-    if (tempLog) {
-      tempLog({ type: 'LOG', time, text: msg })
-    } else writeLog(`${time} LOG ${msg}`)
-  }
-  window.console.error = (...msgs) => {
-    error(...msgs)
-    const msg = msgs.map(m => typeof m == 'string' ? m : JSON.stringify(m)).join(' ')
-    const time = new Date().toLocaleString()
-    if (tempLog) {
-      tempLog({ type: 'ERROR', time, text: msg })
-    } else writeLog(`${time} ERROR ${msg}`)
-  }
-  window.console.warn = (...msgs) => {
-    warn(...msgs)
-    const msg = msgs.map(m => typeof m == 'string' ? m : JSON.stringify(m)).join(' ')
-    const time = new Date().toLocaleString()
-    if (tempLog) {
-      tempLog({ type: 'WARN', time, text: msg })
-    } else writeLog(`${time} WARN ${msg}`)
-  }
-
-  const init = async() => {
-    try {
-      let result = await requestStoragePermission()
-      if (!result) return
-      let isExists = await existsFile(logPath)
-      console.log(logPath, isExists)
-      if (!isExists) await writeFile(logPath, '')
-      writeLog(tempLog(m => `${m.time} ${m.type} ${m.text}`).join('\n'))
-      tempLog = null
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
-
-  init()
-}
-
- */

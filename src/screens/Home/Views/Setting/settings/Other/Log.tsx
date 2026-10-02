@@ -1,18 +1,18 @@
 import { memo, useRef, useState, useEffect } from 'react'
 import { View } from 'react-native'
-import { getLogs, clearLogs } from '@/utils/log'
-// import { gzip, ungzip } from 'pako'
-
+import { getLogs, clearLogs, getLogFilePath } from '@/utils/log'
 import SubTitle from '../../components/SubTitle'
 import Button from '../../components/Button'
-import { createStyle, toast } from '@/utils/tools'
+import { createStyle, toast, clipboardWriteText } from '@/utils/tools'
 import ConfirmAlert, { type ConfirmAlertType } from '@/components/common/ConfirmAlert'
 import CheckBoxItem from '../../components/CheckBoxItem'
 import { useI18n } from '@/lang'
 import Text from '@/components/common/Text'
+import { useTheme } from '@/store/theme/hook'
 
 export default memo(() => {
   const t = useI18n()
+  const theme = useTheme()
   const alertRef = useRef<ConfirmAlertType>(null)
   const [logText, setLogText] = useState('')
   const isUnmountedRef = useRef(true)
@@ -22,10 +22,7 @@ export default memo(() => {
   const getErrorLog = () => {
     void getLogs().then(log => {
       if (isUnmountedRef.current) return
-      const logArr = log.split(/^----lx log----\n|\n----lx log----\n|\n----lx log----$/)
-      // console.log(logArr)
-      logArr.reverse()
-      setLogText(logArr.join('\n\n').replace(/^\n+|\n+$/, ''))
+      setLogText(log.trim())
     })
   }
 
@@ -34,10 +31,22 @@ export default memo(() => {
     alertRef.current?.setVisible(true)
   }
 
+  const handleCopyLog = () => {
+    void getLogs().then(log => {
+      const trimmed = log.trim()
+      if (!trimmed) {
+        toast(t('setting_other_log_tip_null'))
+        return
+      }
+      clipboardWriteText(trimmed)
+      toast(`已复制全部日志 (${trimmed.length} 字符)`)
+    })
+  }
+
   const handleCleanLog = () => {
     void clearLogs().then(() => {
       toast(t('setting_other_log_tip_clean_success'))
-      getErrorLog()
+      setLogText('')
     })
   }
 
@@ -51,7 +60,6 @@ export default memo(() => {
     global.lx.isEnableUserApiLog = enable
   }
 
-
   useEffect(() => {
     isUnmountedRef.current = false
     return () => {
@@ -61,13 +69,18 @@ export default memo(() => {
 
   return (
     <>
-      <SubTitle title={t('setting_other_log')}>
+      <SubTitle title="运行与测试诊断日志（本地无上报）">
         <View style={styles.checkBox}>
           <CheckBoxItem check={isEnableSyncErrorLog} label={t('setting_other_log_sync_log')} onChange={handleSetEnableSyncErrorLog} />
           <CheckBoxItem check={isEnableUserApiLog} label={t('setting_other_log_user_api_log')} onChange={handleSetEnableUserApiLog} />
         </View>
-        <View style={styles.btn}>
+        <Text size={12} color={theme['c-font-label']} style={styles.pathTip}>
+          日志路径: {getLogFilePath()}
+        </Text>
+        <View style={styles.btnRow}>
           <Button onPress={openLogModal}>{t('setting_other_log_btn_show')}</Button>
+          <Button onPress={handleCopyLog}>一键复制</Button>
+          <Button onPress={handleCleanLog}>清空日志</Button>
         </View>
       </SubTitle>
       <ConfirmAlert
@@ -77,13 +90,19 @@ export default memo(() => {
         onConfirm={handleCleanLog}
         showConfirm={!!logText}
         reverseBtn={true}
-        >
+      >
         <View onStartShouldSetResponder={() => true}>
-          {
-            logText
-              ? <Text selectable size={13}>{ logText }</Text>
-              : <Text size={13}>{t('setting_other_log_tip_null')}</Text>
-          }
+          {logText ? (
+            <View>
+              <View style={styles.modalActions}>
+                <Button onPress={handleCopyLog}>复制日志</Button>
+                <Button onPress={getErrorLog}>刷新</Button>
+              </View>
+              <Text selectable size={12} style={styles.logContent}>{logText}</Text>
+            </View>
+          ) : (
+            <Text size={13}>{t('setting_other_log_tip_null')}</Text>
+          )}
         </View>
       </ConfirmAlert>
     </>
@@ -92,11 +111,22 @@ export default memo(() => {
 
 const styles = createStyle({
   checkBox: {
-    // paddingTop: 10,
-    paddingBottom: 15,
+    paddingBottom: 10,
     marginLeft: -25,
   },
-  btn: {
+  pathTip: {
+    paddingBottom: 12,
+  },
+  btnRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  logContent: {
+    lineHeight: 18,
   },
 })
+

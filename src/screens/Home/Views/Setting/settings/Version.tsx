@@ -68,7 +68,12 @@ export default memo(() => {
       <SubTitle title={title}>
         <View style={styles.desc}>
           <Text size={14}>{t('version_label_latest_ver')}{versionInfo.newVersion?.version}</Text>
-          <Text size={14}>{t('version_label_current_ver')}{currentVer}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, marginBottom: 2 }}>
+            <Text size={14}>{t('version_label_current_ver')}{currentVer}</Text>
+            <View style={{ marginLeft: 8, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#f59e0b', borderRadius: 4 }}>
+              <Text size={11} style={{ color: '#fff', fontWeight: 'bold' }}>日志增强测试版</Text>
+            </View>
+          </View>
           {
             tip ? <Text size={14}>{tip}</Text> : null
           }

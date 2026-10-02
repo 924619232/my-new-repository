@@ -7,6 +7,7 @@ import { isTempId, isEmpty } from './utils'
 import { exitApp } from '@/core/common'
 import { getCurrentTrackId } from './playList'
 import { pause, play, playNext, playPrev } from '@/core/player/player'
+import { log } from '@/utils/log'
 
 let isInitialized = false
 
@@ -67,7 +68,7 @@ const registerPlaybackService = async() => {
   // })
 
   TrackPlayer.addEventListener(TPEvent.PlaybackError, async(err: any) => {
-    console.log('playback-error', err)
+    log.error('PlaybackService', 'playback-error:', err)
     global.app_event.error()
     global.app_event.playerError()
   })
@@ -113,12 +114,12 @@ const registerPlaybackService = async() => {
   TrackPlayer.addEventListener(TPEvent.PlaybackTrackChanged, async info => {
     // console.log('PlaybackTrackChanged====>', info)
     global.lx.playerTrackId = await getCurrentTrackId()
-    console.log('[PlayerCore] PlaybackTrackChanged trackId:', global.lx.playerTrackId, 'info:', JSON.stringify(info))
+    log.info('PlaybackService', `PlaybackTrackChanged trackId: ${global.lx.playerTrackId}, info: ${JSON.stringify(info)}`)
     if (info.track == null) return
     if (global.lx.isPlayedStop) return handleExitApp('Timeout Exit')
 
     if (isEmpty()) {
-      console.log('[PlayerCore] PlaybackTrackChanged isEmpty matched, pausing')
+      log.warn('PlaybackService', 'PlaybackTrackChanged isEmpty matched, pausing')
       await TrackPlayer.pause()
       global.app_event.playerPause()
       global.app_event.pause()

@@ -28,6 +28,7 @@ import { checkIgnoringBatteryOptimization, checkNotificationPermission, debounce
 import { LIST_IDS } from '@/config/constant'
 import { addListMusics, removeListMusics, setActiveList } from '@/core/list'
 import { addDislikeInfo } from '@/core/dislikeList'
+import { log } from '@/utils/log'
 
 // import { checkMusicFileAvailable } from '@renderer/utils/music'
 
@@ -112,22 +113,22 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
       isRefresh,
       onToggleSource(mInfo) {
         if (diffCurrentMusicInfo(musicInfo)) return
+        log.warn('PlayerCore', `Toggling source for [${musicInfo.name}]`)
         setStatusText(global.i18n.t('toggle_source_try'))
       },
     })
   }).then(url => {
     if (global.lx.isPlayedStop) {
-      console.log('[PlayerCore] isPlayedStop is true, returning null')
+      log.warn('PlayerCore', `isPlayedStop is true, returning null for [${musicInfo.name}]`)
       return null
     }
     if (diffCurrentMusicInfo(musicInfo)) {
-      console.log('[PlayerCore] diffCurrentMusicInfo matched, skipping stale url')
+      log.warn('PlayerCore', `diffCurrentMusicInfo matched, skipping stale url for [${musicInfo.name}]`)
       return null
     }
 
     return url
   }).catch(async err => {
-    // console.log('err', err.message)
     if (global.lx.isPlayedStop ||
       diffCurrentMusicInfo(musicInfo) ||
       err.message == requestMsg.cancelRequest) return null
@@ -136,6 +137,7 @@ const getMusicPlayUrl = async(musicInfo: LX.Music.MusicInfo | LX.Download.ListIt
 
     if (!isRetryed) return getMusicPlayUrl(musicInfo, isRefresh, true)
 
+    log.error('PlayerCore', `Failed to get play url for [${musicInfo.name}]:`, err)
     throw err
   })
 }
@@ -144,15 +146,16 @@ export const setMusicUrl = (musicInfo: LX.Music.MusicInfo | LX.Download.ListItem
   // addLoadTimeout()
   if (cancelDelayRetry) cancelDelayRetry()
   global.lx.gettingUrlId = createGettingUrlId(musicInfo)
+  log.info('PlayerCore', `Requesting stream for: [${musicInfo.name} - ${'singer' in musicInfo ? musicInfo.singer : ''}] (id: ${musicInfo.id}, refresh: ${!!isRefresh})`)
   void getMusicPlayUrl(musicInfo, isRefresh).then((url) => {
     if (!url) {
-      console.log('[PlayerCore] getMusicPlayUrl returned empty/intercepted url for:', musicInfo.name)
+      log.warn('PlayerCore', `getMusicPlayUrl returned empty/intercepted url for: [${musicInfo.name}]`)
       return
     }
-    console.log('[PlayerCore] setResource dispatching stream url:', url.substring(0, 100))
+    log.info('PlayerCore', `Dispatching to player engine (url len=${url.length}): [${musicInfo.name}] -> ${url.substring(0, 100)}...`)
     setResource(musicInfo, url, playerState.progress.nowPlayTime)
   }).catch((err: any) => {
-    console.log(err)
+    log.error('PlayerCore', `Playback pipeline failure for: [${musicInfo.name}]:`, err)
     setStatusText(err.message as string)
     global.app_event.error()
     addDelayNextTimeout()
