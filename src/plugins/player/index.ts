@@ -34,7 +34,7 @@ const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnabl
     maxBuffer: 1000,
     waitForBuffer: true,
     handleAudioFocus: isHandleAudioFocus,
-    audioOffload: isEnableAudioOffload,
+    audioOffload: false, // 🛡️【物理级防外放熔断】：无论上层配置如何，强行锁死为 false，杜绝 DSP 独占被撕毁导致的扬声器逃逸
     autoUpdateMetadata: false,
   })
   global.lx.playerStatus.isInitialized = true

@@ -116,6 +116,13 @@ export const initSetting = async() => {
     updatedSetting.setting['theme.lightId'] = 'obsidian_glass'
     updatedSetting.setting['theme.darkId'] = 'obsidian_glass'
   }
+
+  // 🛡️【耳机防外放安全强制迁移】：老旧版本默认开启的 Audio Offload 硬件通道会导致耳机互斥时声音逃逸外放至扬声器
+  // 必须对所有存量升级设备执行一次性安全熔断，强制更正为 false 并持久化回写 SQLite
+  if (updatedSetting.setting['player.isEnableAudioOffload'] === true) {
+    updatedSetting.setting['player.isEnableAudioOffload'] = false
+  }
+
   void saveData(storageDataPrefix.setting, updatedSetting.setting)
 
   return updatedSetting

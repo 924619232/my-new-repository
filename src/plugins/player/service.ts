@@ -98,16 +98,39 @@ const registerPlaybackService = async() => {
   })
 
   // 🛡️【耳机防外放护栏】：受控接管音频焦点争抢，当其他应用发声时安全暂停，彻底杜绝路由跳变至扬声器
+  let isPausedByRemoteDuck = false
+  let resumeTimer: NodeJS.Timeout | null = null
+
   TrackPlayer.addEventListener(TPEvent.RemoteDuck, async({ permanent, paused, ducking }) => {
     log.info('PlaybackService', `[RemoteDuck] Audio focus event: permanent=${permanent}, paused=${paused}, ducking=${ducking}`)
-    if (permanent || paused) {
+    if (resumeTimer) {
+      clearTimeout(resumeTimer)
+      resumeTimer = null
+    }
+
+    if (permanent) {
+      // 永久丧失焦点（如被其他播放器接管、打电话），主动暂停并重置状态，绝不自动续播
+      isPausedByRemoteDuck = false
+      clearBufferingWatchdog()
+      void pause()
+    } else if (paused) {
+      // 短暂被其他应用（如语音消息、短视频）抢占打断
+      isPausedByRemoteDuck = true
       clearBufferingWatchdog()
       void pause()
     } else if (ducking) {
-      // 临时降音：保持受控，绝不撕毁音频会话
+      // 临时降音模式（如导航轻提示）：系统自动软降音，保持播放状态，绝不打断混音管线
     } else {
-      // 焦点平滑归还，安全恢复播放
-      play()
+      // 焦点归还：增加 300ms 蓝牙 A2DP 重连握手缓冲期，等底层耳机通路完全就绪后再淡入起播，彻底杜绝外放抢跑
+      if (isPausedByRemoteDuck) {
+        isPausedByRemoteDuck = false
+        resumeTimer = setTimeout(() => {
+          resumeTimer = null
+          if (!global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
+            play()
+          }
+        }, 300)
+      }
     }
   })
 
