@@ -52,13 +52,9 @@ export const getMusicUrl = async({ musicInfo, quality, isRefresh, allowToggleSou
 
   //   // return Promise.reject(new Error('该歌曲没有可播放的音频'))
   // }
-  const targetQuality = quality ?? getPlayQuality(settingState.setting['player.playQuality'], musicInfo)
-  const cachedUrl = await getStoreMusicUrl(musicInfo, targetQuality)
-  if (cachedUrl && !isRefresh) return cachedUrl
-
-  return handleGetOnlineMusicUrl({ musicInfo, quality, onToggleSource, isRefresh, allowToggleSource }).then(({ url, quality: targetQuality, musicInfo: targetMusicInfo, isFromCache }) => {
-    if (targetMusicInfo.id != musicInfo.id && !isFromCache) void saveMusicUrl(targetMusicInfo, targetQuality, url)
-    void saveMusicUrl(musicInfo, targetQuality, url)
+  // 🛡️【红线防腐】：国内音乐直链带有 15~30 分钟防盗链时效，严禁将其作为持久化永久缓存存取！
+  // 坚决禁用 getStoreMusicUrl 和 saveMusicUrl，随用随取，确保 100% 获取官方第一方最新活链
+  return handleGetOnlineMusicUrl({ musicInfo, quality, onToggleSource, isRefresh, allowToggleSource }).then(({ url }) => {
     return url
   })
 }

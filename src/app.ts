@@ -2,7 +2,7 @@ import '@/utils/errorHandle'
 import { init as initLog } from '@/utils/log'
 import { bootLog, getBootLog } from '@/utils/bootLog'
 import '@/config/globalData'
-import { getFontSize } from '@/utils/data'
+import { getFontSize, clearMusicUrl } from '@/utils/data'
 import { exitApp } from './utils/nativeModules/utils'
 import { windowSizeTools } from './utils/windowSizeTools'
 import { listenLaunchEvent } from './navigation/regLaunchedEvent'
@@ -29,6 +29,7 @@ void Promise.all([getFontSize(), windowSizeTools.init()]).then(async([fontSize])
   const handleInit = async() => {
     if (isInited) return
     void initLog()
+    void clearMusicUrl().catch(() => {})
     const { default: init } = await import('@/core/init')
     try {
       handlePushedHomeScreen = await init()
