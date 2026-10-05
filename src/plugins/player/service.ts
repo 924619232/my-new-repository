@@ -6,20 +6,53 @@ import { isTempId, isEmpty } from './utils'
 // import { play as lrcPlay, pause as lrcPause } from '@/core/lyric'
 import { exitApp } from '@/core/common'
 import { getCurrentTrackId } from './playList'
-import { pause, play, playNext, playPrev } from '@/core/player/player'
+import { pause, play, playNext, playPrev, setMusicUrl } from '@/core/player/player'
+import playerState from '@/store/player/state'
 import { log } from '@/utils/log'
 
 let isInitialized = false
 
-// let retryTrack: LX.Player.Track | null = null
-// let retryGetUrlId: string | null = null
-// let retryGetUrlNum = 0
-// let errorTime = 0
-// let prevDuration = 0
-// let isPlaying = false
+// ── 缓冲挂死看门狗与自动自愈机制 (针对车机源防盗链 410 / State 6 缓冲卡死) ──
+let bufferingWatchdogTimer: NodeJS.Timeout | null = null
+let bufferingRetryCount = 0
+let lastBufferingSongId: string | null = null
+
+const clearBufferingWatchdog = () => {
+  if (bufferingWatchdogTimer) {
+    clearTimeout(bufferingWatchdogTimer)
+    bufferingWatchdogTimer = null
+  }
+}
+
+const startBufferingWatchdog = () => {
+  clearBufferingWatchdog()
+  bufferingWatchdogTimer = setTimeout(async() => {
+    bufferingWatchdogTimer = null
+    const currentMusic = playerState.playMusicInfo.musicInfo
+    if (!currentMusic) return
+
+    log.warn('PlaybackService', `[Buffering Watchdog] State 6 Buffering timeout (>3.5s) on [${currentMusic.name}]! Dead link/410 suspected.`)
+    
+    if (lastBufferingSongId !== currentMusic.id) {
+      lastBufferingSongId = currentMusic.id
+      bufferingRetryCount = 0
+    }
+
+    if (bufferingRetryCount < 1) {
+      bufferingRetryCount++
+      log.info('PlaybackService', `[SelfHealing] Forcing fresh URL fetch for [${currentMusic.name}] (retry=${bufferingRetryCount})...`)
+      setMusicUrl(currentMusic, true)
+    } else {
+      log.warn('PlaybackService', `[SelfHealing] Fresh URL also stuck in buffering for [${currentMusic.name}], skipping to next song.`)
+      bufferingRetryCount = 0
+      void playNext(true)
+    }
+  }, 3500)
+}
 
 // 销毁播放器并退出
 const handleExitApp = async(reason: string) => {
+  clearBufferingWatchdog()
   global.lx.isPlayedStop = false
   exitApp(reason)
 }
@@ -30,44 +63,31 @@ const registerPlaybackService = async() => {
 
   console.log('reg services...')
   TrackPlayer.addEventListener(TPEvent.RemotePlay, () => {
-    // console.log('remote-play')
     play()
   })
 
   TrackPlayer.addEventListener(TPEvent.RemotePause, () => {
-    // console.log('remote-pause')
+    clearBufferingWatchdog()
     void pause()
   })
 
   TrackPlayer.addEventListener(TPEvent.RemoteNext, () => {
-    // console.log('remote-next')
+    clearBufferingWatchdog()
     void playNext()
   })
 
   TrackPlayer.addEventListener(TPEvent.RemotePrevious, () => {
-    // console.log('remote-previous')
+    clearBufferingWatchdog()
     void playPrev()
   })
 
   TrackPlayer.addEventListener(TPEvent.RemoteStop, () => {
-    // console.log('remote-stop')
+    clearBufferingWatchdog()
     void handleExitApp('Remote Stop')
   })
 
-  // TrackPlayer.addEventListener(TPEvent.RemoteDuck, async({ permanent, paused, ducking }) => {
-  //   console.log('remote-duck')
-  //   if (paused) {
-  //     store.dispatch(playerAction.setStatus({ status: STATUS.pause, text: '已暂停' }))
-  //     lrcPause()
-  //   } else {
-  //     store.dispatch(playerAction.setStatus({ status: STATUS.playing, text: '播放中...' }))
-  //     TrackPlayer.getPosition().then(position => {
-  //       lrcPlay(position * 1000)
-  //     })
-  //   }
-  // })
-
   TrackPlayer.addEventListener(TPEvent.PlaybackError, async(err: any) => {
+    clearBufferingWatchdog()
     log.error('PlaybackService', 'playback-error:', err)
     global.app_event.error()
     global.app_event.playerError()
@@ -79,23 +99,26 @@ const registerPlaybackService = async() => {
 
   TrackPlayer.addEventListener(TPEvent.PlaybackState, async info => {
     if (global.lx.gettingUrlId || isTempId()) return
-    // let currentIsPlaying = false
 
     switch (info.state) {
       case TPState.None:
-        // console.log('state', 'State.NONE')
+        clearBufferingWatchdog()
         break
       case TPState.Ready:
       case TPState.Stopped:
       case TPState.Paused:
+        clearBufferingWatchdog()
         global.app_event.playerPause()
         global.app_event.pause()
         break
       case TPState.Playing:
+        clearBufferingWatchdog()
+        bufferingRetryCount = 0
         global.app_event.playerPlaying()
         global.app_event.play()
         break
       case TPState.Buffering:
+        startBufferingWatchdog()
         global.app_event.pause()
         global.app_event.playerWaiting()
         break
@@ -103,15 +126,13 @@ const registerPlaybackService = async() => {
         global.app_event.playerLoadstart()
         break
       default:
-        // console.log('playback-state', info)
         break
     }
     if (global.lx.isPlayedStop) return handleExitApp('Timeout Exit')
-
-    // console.log('currentIsPlaying', currentIsPlaying, global.lx.playInfo.isPlaying)
-    // void updateMetaData(global.lx.store_playMusicInfo.musicInfo, currentIsPlaying)
   })
   TrackPlayer.addEventListener(TPEvent.PlaybackTrackChanged, async info => {
+    clearBufferingWatchdog()
+    bufferingRetryCount = 0
     // console.log('PlaybackTrackChanged====>', info)
     global.lx.playerTrackId = await getCurrentTrackId()
     log.info('PlaybackService', `PlaybackTrackChanged trackId: ${global.lx.playerTrackId}, info: ${JSON.stringify(info)}`)

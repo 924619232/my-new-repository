@@ -70,8 +70,8 @@ export default memo(() => {
           <Text size={14}>{t('version_label_latest_ver')}{versionInfo.newVersion?.version}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, marginBottom: 2 }}>
             <Text size={14}>{t('version_label_current_ver')}{currentVer}</Text>
-            <View style={{ marginLeft: 8, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#f59e0b', borderRadius: 4 }}>
-              <Text size={11} style={{ color: '#fff', fontWeight: 'bold' }}>日志增强测试版</Text>
+            <View style={{ marginLeft: 8, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#10b981', borderRadius: 4 }}>
+              <Text size={11} style={{ color: '#fff', fontWeight: 'bold' }}>去中心化自愈日志版</Text>
             </View>
           </View>
           {

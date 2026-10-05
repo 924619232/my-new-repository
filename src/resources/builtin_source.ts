@@ -1,8 +1,8 @@
-// Auto-generated built-in v3.8.2 domestic direct source (Decentralized Autonomous Client)
+// Auto-generated built-in v3.8.3 decentralized direct source (Decentralized Autonomous Client - Log Edition)
 const builtinSource: string = `/*!
- * @name CJY 臻品无损音源 (国内秒播直解版)
- * @description 全球无损母带直推 · 客户端原生车机直解 · 200ms极速起播
- * @version 3.8.2
+ * @name CJY 臻品无损音源 (去中心化本地日志版)
+ * @description 全球无损母带直推 · 客户端原生车机直解 · 200ms极速起播 · 纯本地免中心化
+ * @version 3.8.3
  * @author CJY
  * @homepage https://music.cjy.qzz.io
  */
@@ -10,13 +10,13 @@ const builtinSource: string = `/*!
 const { EVENT_NAMES, on, send, request } = globalThis.lx;
 
 const API_BASE = "https://music.cjy.qzz.io";
-const CURRENT_VERSION = "3.8.2";
+const CURRENT_VERSION = "3.8.3";
 const SOURCE_URL = API_BASE + "/api/lx/source.js";
 
-// ── 0. 客户端 LRU 内存级缓存 (0ms 瞬间秒切/循环重播) ──
+// ── 0. 客户端 LRU 内存级缓存 (5分钟短期随用随取，杜绝410过期防盗链死锁) ──
 const urlCache = new Map();
-const CACHE_MAX = 500;
-const CACHE_TTL = 3600 * 1000; // 1小时有效
+const CACHE_MAX = 200;
+const CACHE_TTL = 300 * 1000; // 5分钟有效 (严格匹配车机防盗链时效)
 
 const getCachedUrl = (key) => {
   if (!urlCache.has(key)) return null;
@@ -448,42 +448,39 @@ const _handleVerBody = (raw) => {
   } catch(e) {}
 };
 
-try {
-  httpGet(API_BASE + "/api/lx/version", { timeout: 3000 })
-    .then(({ body }) => _handleVerBody(body))
-    .catch(() => {});
-} catch(e) {}
+// ── 8. 本地测试日志版：完全断开远程中心化版本拉取与上报 ──
+// 保证 100% 本地端侧运行，零中心化 VPS 依赖
 
 send(EVENT_NAMES.inited, {
   status: true,
   openDevTools: false,
   sources: {
     kw: {
-      name: '酷我音乐 (秒播直解版)',
+      name: '酷我音乐 (本地直解日志版)',
       type: 'music',
       actions: ['musicUrl', 'lyric'],
       qualitys: ['128k', '320k', 'flac', 'flac24bit']
     },
     kg: {
-      name: '酷狗音乐 (秒播直解版)',
+      name: '酷狗音乐 (本地直解日志版)',
       type: 'music',
       actions: ['musicUrl', 'lyric'],
       qualitys: ['128k', '320k', 'flac', 'flac24bit']
     },
     tx: {
-      name: '企鹅音乐 (秒播直解版)',
+      name: '企鹅音乐 (本地直解日志版)',
       type: 'music',
       actions: ['musicUrl', 'lyric'],
       qualitys: ['128k', '320k', 'flac', 'flac24bit']
     },
     wy: {
-      name: '网易音乐 (秒播直解版)',
+      name: '网易音乐 (本地直解日志版)',
       type: 'music',
       actions: ['musicUrl', 'lyric'],
       qualitys: ['128k', '320k', 'flac', 'flac24bit']
     },
     mg: {
-      name: '咪咕音乐 (秒播直解版)',
+      name: '咪咕音乐 (本地直解日志版)',
       type: 'music',
       actions: ['musicUrl', 'lyric'],
       qualitys: ['128k', '320k', 'flac', 'flac24bit']
