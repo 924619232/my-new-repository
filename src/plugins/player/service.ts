@@ -97,6 +97,20 @@ const registerPlaybackService = async() => {
     global.app_event.setProgress(position as number)
   })
 
+  // 🛡️【耳机防外放护栏】：受控接管音频焦点争抢，当其他应用发声时安全暂停，彻底杜绝路由跳变至扬声器
+  TrackPlayer.addEventListener(TPEvent.RemoteDuck, async({ permanent, paused, ducking }) => {
+    log.info('PlaybackService', `[RemoteDuck] Audio focus event: permanent=${permanent}, paused=${paused}, ducking=${ducking}`)
+    if (permanent || paused) {
+      clearBufferingWatchdog()
+      void pause()
+    } else if (ducking) {
+      // 临时降音：保持受控，绝不撕毁音频会话
+    } else {
+      // 焦点平滑归还，安全恢复播放
+      play()
+    }
+  })
+
   TrackPlayer.addEventListener(TPEvent.PlaybackState, async info => {
     if (global.lx.gettingUrlId || isTempId()) return
 
