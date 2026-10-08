@@ -97,40 +97,18 @@ const registerPlaybackService = async() => {
     global.app_event.setProgress(position as number)
   })
 
-  // 🛡️【耳机防外放护栏】：受控接管音频焦点争抢，当其他应用发声时安全暂停，彻底杜绝路由跳变至扬声器
-  let isPausedByRemoteDuck = false
-  let resumeTimer: NodeJS.Timeout | null = null
-
+  // 🛡️【音频焦点与压低音量 (Ducking) 规范】：
+  // 1. 当 handleAudioFocus 为 true 时，ExoPlayer 底层已全权自主处理音频混音与硬件焦点。
+  // 2. 遇临时提示音/导航发声时，ExoPlayer 自动降低音量（Duck），不应粗暴调用 pause() 中断音乐播放。
+  // 3. 严禁在 RemoteDuck 回调内反向调用 pause()，彻底切断底层与 JS Bridge 之间每秒数百次的死循环状态轰炸（杜绝 2.5 万次死锁卡死）。
+  // 4. 仅作客观事件监控与状态机同步；当遭遇永久性丢失且底层已暂停时，同步上层 UI 状态。
   TrackPlayer.addEventListener(TPEvent.RemoteDuck, async({ permanent, paused, ducking }) => {
     log.info('PlaybackService', `[RemoteDuck] Audio focus event: permanent=${permanent}, paused=${paused}, ducking=${ducking}`)
-    if (resumeTimer) {
-      clearTimeout(resumeTimer)
-      resumeTimer = null
-    }
-
-    if (permanent) {
-      // 永久丧失焦点（如被其他播放器接管、打电话），主动暂停并重置状态，绝不自动续播
-      isPausedByRemoteDuck = false
+    if (permanent && paused) {
+      // 永久丧失焦点（如电话接通、被其他独占播放器接管），底层 ExoPlayer 已经将 playWhenReady 设为 false，清空看门狗并同步状态
       clearBufferingWatchdog()
-      void pause()
-    } else if (paused) {
-      // 短暂被其他应用（如语音消息、短视频）抢占打断
-      isPausedByRemoteDuck = true
-      clearBufferingWatchdog()
-      void pause()
-    } else if (ducking) {
-      // 临时降音模式（如导航轻提示）：系统自动软降音，保持播放状态，绝不打断混音管线
-    } else {
-      // 焦点归还：增加 300ms 蓝牙 A2DP 重连握手缓冲期，等底层耳机通路完全就绪后再淡入起播，彻底杜绝外放抢跑
-      if (isPausedByRemoteDuck) {
-        isPausedByRemoteDuck = false
-        resumeTimer = setTimeout(() => {
-          resumeTimer = null
-          if (!global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
-            play()
-          }
-        }, 300)
-      }
+      global.app_event.playerPause()
+      global.app_event.pause()
     }
   })
 
