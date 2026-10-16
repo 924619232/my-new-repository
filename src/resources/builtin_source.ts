@@ -238,9 +238,23 @@ const searchKuwoMatch = async (title, artist, quality, targetAlbum) => {
     const isJunk = /(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(itTitle) && !/(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(title);
     if (isJunk) continue;
 
-    // 🛡️【红线一】正规录音棚专辑对齐与电影推广曲剪辑版拦截：
+    // 🛡️ 严格拦截已知业余翻唱/学生社团与异语种串台
+    if (/红色高跟鞋/i.test(title)) {
+      if (/(广州六中|299813486|m&m)/i.test(itTitle + ' ' + itAlb + ' ' + itArtist)) continue;
+    }
+    if (/江南/i.test(title) && !/(粤语|cantonese)/i.test(title)) {
+      if (/(西界|1079171|004aw5sp3exzq2|粤语)/i.test(itTitle + ' ' + itAlb)) continue;
+    }
+
+    // 🛡️【红线一】正规大碟对齐与影视副标题智能豁免：
+    const candCoreTitle = itTitle.replace(/[-—–_]?\s*[\(（\[【《〈][^\(\)（）\[\]【】《》〈〉]*(?:电影|电视剧|片头曲|片尾曲|主题曲|插曲|推广曲|原声|ost)[^\(\)（）\[\]【】《》〈〉]*[\)）\]】》〉]?/gi, '').trim();
     const isCandMovie = /(电影|主题曲|插曲|片尾曲|推广曲|原声|ost)/i.test(itTitle);
-    if (!isTargetMovie && isCandMovie) continue;
+    const isKnownAlbum = /(若你碰到他|第二天堂|这世界那么多人|唱游|未完成|耳朵|模特)/i.test(itAlb);
+    if (!isTargetMovie && isCandMovie && !isKnownAlbum) {
+      if (candCoreTitle.toLowerCase().replace(/\s+/g, '') !== cTitle.toLowerCase().replace(/\s+/g, '')) {
+        continue;
+      }
+    }
 
     // 🛡️【红线一】语种与版本严格互斥：防止国语/粤语版本串台
     const isTargetCantonese = /(粤语|粤语版|cantonese)/i.test(title);
