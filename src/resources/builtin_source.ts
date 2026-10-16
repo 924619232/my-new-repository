@@ -214,7 +214,7 @@ const cleanSongArtist = (rawArtist) => {
 };
 
 // ── 3. 跨平台曲目客户端国内毫秒级原唱强匹配（严格现场版淘汰制，录音棚曲目绝不命中演唱会 Live） ──
-const searchKuwoMatch = async (title, artist, quality) => {
+const searchKuwoMatch = async (title, artist, quality, targetAlbum) => {
   if (!title) return null;
   const cTitle = cleanSongTitle(title);
   const cArtist = cleanSongArtist(artist);
@@ -225,6 +225,7 @@ const searchKuwoMatch = async (title, artist, quality) => {
   const items = (data && data.abslist) ? data.abslist : [];
 
   const isTargetLive = /(live|现场|演唱会|音乐会|tour)/i.test(title);
+  const isTargetMovie = /(电影|主题曲|插曲|片尾曲|推广曲|原声|ost)/i.test(title);
 
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
@@ -237,6 +238,16 @@ const searchKuwoMatch = async (title, artist, quality) => {
     const isJunk = /(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(itTitle) && !/(伴奏|铃声|片段|翻唱|伴唱|降调|加快|慢速|dj版)/i.test(title);
     if (isJunk) continue;
 
+    // 🛡️【红线一】正规录音棚专辑对齐与电影推广曲剪辑版拦截：
+    const isCandMovie = /(电影|主题曲|插曲|片尾曲|推广曲|原声|ost)/i.test(itTitle);
+    if (!isTargetMovie && isCandMovie) continue;
+
+    // 🛡️【红线一】语种与版本严格互斥：防止国语/粤语版本串台
+    const isTargetCantonese = /(粤语|粤语版|cantonese)/i.test(title);
+    const isCandCantonese = /(粤语|粤语版|cantonese)/i.test(itTitle + ' ' + itAlb);
+    if (!isTargetCantonese && isCandCantonese) continue;
+    if (isTargetCantonese && !isCandCantonese) continue;
+
     // 🛡️【红线一】歌名强校验防伪：候选歌名必须与目标歌名一致，严禁张冠李戴！
     const targetTitleClean = cTitle.toLowerCase().replace(/\\s+/g, '');
     const candTitleClean = itTitle.toLowerCase().replace(/[\\(（\\[【《〈].*?[\\)）\\]】》〉]/g, '').replace(/[-_].*$/, '').replace(/\\s+/g, '') || itTitle.toLowerCase().replace(/\\s+/g, '');
@@ -247,6 +258,15 @@ const searchKuwoMatch = async (title, artist, quality) => {
     // 严格现场版淘汰制：若原曲为录音棚版，候选一旦包含“现场/演唱会/Live”，坚决一票否决！
     const isCandidateLive = /(live|现场|演唱会|音乐会|tour)/i.test(itTitle + ' ' + itAlb);
     if (!isTargetLive && isCandidateLive) continue;
+
+    // 官方正规专辑严格对齐：杜绝同名跨专辑穿透（如《第二天堂》国语 vs《西界》粤语）
+    if (targetAlbum && itAlb) {
+      const tAlbClean = String(targetAlbum).replace(/[\\(（\\[【《〈].*?[\\)）\\]】》〉]/g, '').trim().toLowerCase();
+      const cAlbClean = itAlb.replace(/[\\(（\\[【《〈].*?[\\)）\\]】》〉]/g, '').trim().toLowerCase();
+      if (tAlbClean && cAlbClean && tAlbClean !== cAlbClean && !cAlbClean.includes(tAlbClean) && !tAlbClean.includes(cAlbClean)) {
+        continue; // 所属专辑完全不匹配，直接拦截异轨版本！
+      }
+    }
 
     if (cArtist) {
       const tA = cArtist.toLowerCase();
@@ -334,6 +354,8 @@ const handleMusicUrl = async (songInfo, type, source) => {
     neteaseId = (songInfo && (songInfo.netease_id || '')) || '';
   }
 
+  const album = (songInfo && (songInfo.album || songInfo.albumName || songInfo.al?.name)) || '';
+
   // 1. 客户端内存极速命中（0ms 瞬间秒起，重复点播/循环播放 0 延迟）
   const cacheKey = src + '_' + (songId || title) + '_' + artist + '_' + (type || 'auto');
   const hit = getCachedUrl(cacheKey);
@@ -361,7 +383,7 @@ const handleMusicUrl = async (songInfo, type, source) => {
     }
     // 通道 C: 跨平台曲目客户端国内毫秒级原唱强匹配（直达 TME 车载 FLAC 无损流，0.2s 极速）
     if (title && (src === 'tx' || src === 'kg' || src === 'mg' || src === 'wy')) {
-      const matchUrl = await searchKuwoMatch(title, artist, type);
+      const matchUrl = await searchKuwoMatch(title, artist, type, album);
       if (matchUrl) {
         setCachedUrl(cacheKey, matchUrl);
         return matchUrl;
