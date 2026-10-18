@@ -162,9 +162,14 @@ declare global {
       'player.isAutoCleanPlayedList': boolean
 
       /**
-       * 其他应用播放声音时是否自动暂停
+       * 其他应用播放声音时是否自动暂停（关闭则允许与其他应用混音同时播放）
        */
       'player.isHandleAudioFocus': boolean
+
+      /**
+       * 其他应用发声结束后是否自动恢复播放
+       */
+      'player.isAutoResumeAfterFocusGain': boolean
 
       /**
        * 是否启用音频卸载功能（这可以节省耗电量，没有播放异常问题不建议关闭）

@@ -6,6 +6,7 @@ import { createStyle } from '@/utils/tools'
 
 import PlayHighQuality from '../settings/Player/PlayHighQuality'
 import IsHandleAudioFocus from '../settings/Player/IsHandleAudioFocus'
+import IsAutoResumeAfterFocusGain from '../settings/Player/IsAutoResumeAfterFocusGain'
 import IsEnableAudioOffload from '../settings/Player/IsEnableAudioOffload'
 import IsSavePlayTime from '../settings/Player/IsSavePlayTime'
 import IsAutoCleanPlayedList from '../settings/Player/IsAutoCleanPlayedList'
@@ -31,6 +32,7 @@ export default memo(() => {
         <SubTitle title="音频规格与音质选择">
           <PlayHighQuality />
           <IsHandleAudioFocus />
+          <IsAutoResumeAfterFocusGain />
           <IsEnableAudioOffload />
         </SubTitle>
 
