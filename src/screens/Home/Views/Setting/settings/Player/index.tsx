@@ -4,6 +4,7 @@ import Section from '../../components/Section'
 import IsSavePlayTime from './IsSavePlayTime'
 import PlayHighQuality from './PlayHighQuality'
 import IsHandleAudioFocus from './IsHandleAudioFocus'
+import IsAutoResumeAfterFocusGain from './IsAutoResumeAfterFocusGain'
 import IsEnableAudioOffload from './IsEnableAudioOffload'
 import IsAutoCleanPlayedList from './IsAutoCleanPlayedList'
 import IsShowBluetoothLyric from './IsShowBluetoothLyric'
@@ -24,6 +25,7 @@ export default memo(() => {
       <IsSavePlayTime />
       <IsAutoCleanPlayedList />
       <IsHandleAudioFocus />
+      <IsAutoResumeAfterFocusGain />
       <IsEnableAudioOffload />
       <IsShowBluetoothLyric />
       <IsShowBluetoothFullLyric />

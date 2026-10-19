@@ -10,7 +10,11 @@ import android.graphics.Rect;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.media.AudioManager;
+import android.media.AudioPlaybackConfiguration;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -29,6 +33,7 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -38,12 +43,15 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   private int listenerCount = 0;
 
   UtilsEvent utilsEvent;
+  private AudioManager.AudioPlaybackCallback audioPlaybackCallback = null;
+  private boolean isOtherAppPlaying = false;
 
   UtilsModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
     utilsEvent = new UtilsEvent(reactContext);
     registerScreenBroadcastReceiver();
+    registerAudioPlaybackListener();
   }
 
   @Override
@@ -389,6 +397,98 @@ public class UtilsModule extends ReactContextBaseJavaModule {
         promise.reject("ERROR", e);
       }
     }).start();
+  }
+
+  private void registerAudioPlaybackListener() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager == null) return;
+      audioPlaybackCallback = new AudioManager.AudioPlaybackCallback() {
+        @Override
+        public void onPlaybackConfigChanged(List<AudioPlaybackConfiguration> configs) {
+          super.onPlaybackConfigChanged(configs);
+          handleAudioPlaybackConfigs(configs);
+        }
+      };
+      audioManager.registerAudioPlaybackCallback(audioPlaybackCallback, new Handler(Looper.getMainLooper()));
+      Log.i("UtilsModule", "Registered AudioPlaybackCallback successfully");
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "Failed to register AudioPlaybackCallback: " + t.getMessage());
+    }
+  }
+
+  private void handleAudioPlaybackConfigs(List<AudioPlaybackConfiguration> configs) {
+    if (configs == null) return;
+    int myUid = android.os.Process.myUid();
+    boolean hasOther = false;
+    for (AudioPlaybackConfiguration config : configs) {
+      try {
+        if (config.getClientUid() != myUid) {
+          int state = config.getPlayerState();
+          if (state == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
+            hasOther = true;
+            break;
+          }
+        }
+      } catch (Throwable ignored) {
+      }
+    }
+
+    if (hasOther != isOtherAppPlaying) {
+      isOtherAppPlaying = hasOther;
+      if (!isOtherAppPlaying) {
+        Log.i("UtilsModule", "Other app audio ended! Emitting other-app-audio-ended event...");
+        utilsEvent.sendEvent("other-app-audio-ended", null);
+      } else {
+        Log.i("UtilsModule", "Other app audio started! Emitting other-app-audio-started event...");
+        utilsEvent.sendEvent("other-app-audio-started", null);
+      }
+    }
+  }
+
+  @ReactMethod
+  public void isOtherAppPlayingAudio(Promise promise) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      promise.resolve(false);
+      return;
+    }
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager == null) {
+        promise.resolve(false);
+        return;
+      }
+      List<AudioPlaybackConfiguration> configs = audioManager.getActivePlaybackConfigurations();
+      int myUid = android.os.Process.myUid();
+      boolean hasOther = false;
+      if (configs != null) {
+        for (AudioPlaybackConfiguration config : configs) {
+          try {
+            if (config.getClientUid() != myUid && config.getPlayerState() == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
+              hasOther = true;
+              break;
+            }
+          } catch (Throwable ignored) {}
+        }
+      }
+      promise.resolve(hasOther);
+    } catch (Throwable t) {
+      promise.resolve(false);
+    }
+  }
+
+  @Override
+  public void onCatalystInstanceDestroy() {
+    super.onCatalystInstanceDestroy();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioPlaybackCallback != null) {
+      try {
+        AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+          audioManager.unregisterAudioPlaybackCallback(audioPlaybackCallback);
+        }
+      } catch (Throwable ignored) {}
+    }
   }
 }
 

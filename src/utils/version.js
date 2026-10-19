@@ -15,18 +15,22 @@ const abis = [
 let latestVersionInfo = null
 
 const address = [
-  ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
+  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://gcore.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
   ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
+  ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
 ]
 
 
 const request = async(url, retryNum = 0) => {
   return new Promise((resolve, reject) => {
     httpGet(url, {
-      timeout: 10000,
+      timeout: 4000,
     }, (err, resp, body) => {
       if (err || resp.statusCode != 200) {
-        ++retryNum >= 3
+        ++retryNum >= 1
           ? reject(err || new Error(resp.statusMessage || resp.statusCode))
           : request(url, retryNum).then(resolve).catch(reject)
       } else resolve(body)

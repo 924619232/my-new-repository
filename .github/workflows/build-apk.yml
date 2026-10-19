@@ -115,6 +115,14 @@ jobs:
               -H "Content-Type: application/json" \
               --data-binary @"version.json" || echo "Local version.json upload notice"
 
+            ENCODED_139_VER_JSON=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/移动云盘/apps/version.json'))")
+            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
+              -H "Authorization: $TOKEN" \
+              -H "File-Path: $ENCODED_139_VER_JSON" \
+              -H "User-Agent: Mozilla/5.0" \
+              -H "Content-Type: application/json" \
+              --data-binary @"version.json" || echo "139yun version.json upload notice"
+
             echo "2. Uploading APK exclusively to China Mobile Cloud Drive (/移动云盘/apps/)..."
             curl -s -X POST "$OPENLIST_URL/api/fs/remove" \
               -H "Authorization: $TOKEN" \

@@ -99,3 +99,31 @@ export const requestIgnoreBatteryOptimization = async() => new Promise<boolean>(
     resolve(false)
   })
 })
+
+export const onOtherAppAudioEnded = (handler: () => void): () => void => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const eventEmitter = new NativeEventEmitter(UtilsModule)
+  const eventListener = eventEmitter.addListener('other-app-audio-ended', () => {
+    handler()
+  })
+
+  return () => {
+    eventListener.remove()
+  }
+}
+
+export const onOtherAppAudioStarted = (handler: () => void): () => void => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const eventEmitter = new NativeEventEmitter(UtilsModule)
+  const eventListener = eventEmitter.addListener('other-app-audio-started', () => {
+    handler()
+  })
+
+  return () => {
+    eventListener.remove()
+  }
+}
+
+export const isOtherAppPlayingAudio = async(): Promise<boolean> => {
+  return UtilsModule.isOtherAppPlayingAudio()
+}

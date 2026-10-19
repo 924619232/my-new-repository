@@ -1,7 +1,7 @@
 {
-  "version": "1.9.30",
-  "desc": "1. 修复歌手名跳转静态模块依赖，保障【搜索歌手】原生二级压栈专页秒级推入；\n2. 攻克咪咕 18 位 contentId 动态换取，突破独家曲目（如《最难得》）官方正版 320k 物理流；\n3. 搜索结果支持一键播放全部。",
-  "downloadUrl": "https://music.cjy.qzz.io/apps/lx-music-cjy-release.apk",
+  "version": "1.9.45-log",
+  "desc": "fix(ci): strictly enforce zero-APK on VPS, upload solely to China Mobile Cloud Drive & use direct link for version.json (v1.9.44-log code 121)",
+  "downloadUrl": "https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/lx-music-cjy-release.apk",
   "history": [
     {
       "version": "1.9.29",

@@ -123,6 +123,11 @@ export const initSetting = async() => {
     updatedSetting.setting['player.isEnableAudioOffload'] = false
   }
 
+  // 🛡️【焦点自动续播体验修复】：针对老版本或首发版本存量存储为 false 的设备，默认校准为 true
+  if (updatedSetting.setting['player.isAutoResumeAfterFocusGain'] !== true) {
+    updatedSetting.setting['player.isAutoResumeAfterFocusGain'] = true
+  }
+
   void saveData(storageDataPrefix.setting, updatedSetting.setting)
 
   return updatedSetting
