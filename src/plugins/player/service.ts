@@ -10,7 +10,7 @@ import { pause, play, playNext, playPrev, setMusicUrl } from '@/core/player/play
 import playerState from '@/store/player/state'
 import settingState from '@/store/setting/state'
 import { log } from '@/utils/log'
-import { onOtherAppAudioEnded } from '@/utils/nativeModules/utils'
+import { onOtherAppAudioEnded, isOtherAppPlayingAudio } from '@/utils/nativeModules/utils'
 
 let isInitialized = false
 
@@ -18,6 +18,40 @@ let isInitialized = false
 let isPausedByInterruption = false
 let interruptedTime = 0
 let autoResumeTimer: NodeJS.Timeout | null = null
+let focusProbingTimer: NodeJS.Timeout | null = null
+
+const stopFocusProbingWatchdog = () => {
+  if (focusProbingTimer) {
+    clearInterval(focusProbingTimer)
+    focusProbingTimer = null
+  }
+}
+
+const startFocusProbingWatchdog = () => {
+  stopFocusProbingWatchdog()
+  let probeCount = 0
+  // 每 1.2 秒主动探活一次是否有其他 App 正在播放音频，最高探活 30 次（约 36 秒）
+  focusProbingTimer = setInterval(async() => {
+    probeCount++
+    if (probeCount > 30 || !isPausedByInterruption) {
+      stopFocusProbingWatchdog()
+      return
+    }
+    if (!settingState.setting['player.isAutoResumeAfterFocusGain']) {
+      stopFocusProbingWatchdog()
+      return
+    }
+    try {
+      const isOtherPlaying = await isOtherAppPlayingAudio()
+      if (!isOtherPlaying && isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
+        log.info('PlaybackService', '[FocusWatchdog] External audio stopped (detected via active probing)! Auto resuming...')
+        stopFocusProbingWatchdog()
+        isPausedByInterruption = false
+        play()
+      }
+    } catch (e) {}
+  }, 1200)
+}
 
 // ── 缓冲挂死看门狗与自动自愈机制 (针对车机源防盗链 410 / State 6 缓冲卡死) ──
 let bufferingWatchdogTimer: NodeJS.Timeout | null = null
@@ -60,7 +94,8 @@ const startBufferingWatchdog = () => {
 // 销毁播放器并退出
 const handleExitApp = async(reason: string) => {
   clearBufferingWatchdog()
-  isPausedByTransientLoss = false
+  stopFocusProbingWatchdog()
+  isPausedByInterruption = false
   global.lx.isPlayedStop = false
   exitApp(reason)
 }
@@ -72,12 +107,14 @@ const registerPlaybackService = async() => {
   console.log('reg services...')
   TrackPlayer.addEventListener(TPEvent.RemotePlay, () => {
     isPausedByInterruption = false
+    stopFocusProbingWatchdog()
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     play()
   })
 
   TrackPlayer.addEventListener(TPEvent.RemotePause, () => {
     clearBufferingWatchdog()
+    stopFocusProbingWatchdog()
     isPausedByInterruption = false
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     void pause()
@@ -85,6 +122,7 @@ const registerPlaybackService = async() => {
 
   TrackPlayer.addEventListener(TPEvent.RemoteNext, () => {
     clearBufferingWatchdog()
+    stopFocusProbingWatchdog()
     isPausedByInterruption = false
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     void playNext()
@@ -92,6 +130,7 @@ const registerPlaybackService = async() => {
 
   TrackPlayer.addEventListener(TPEvent.RemotePrevious, () => {
     clearBufferingWatchdog()
+    stopFocusProbingWatchdog()
     isPausedByInterruption = false
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     void playPrev()
@@ -99,6 +138,7 @@ const registerPlaybackService = async() => {
 
   TrackPlayer.addEventListener(TPEvent.RemoteStop, () => {
     clearBufferingWatchdog()
+    stopFocusProbingWatchdog()
     isPausedByInterruption = false
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     void handleExitApp('Remote Stop')
@@ -106,6 +146,7 @@ const registerPlaybackService = async() => {
 
   TrackPlayer.addEventListener(TPEvent.PlaybackError, async(err: any) => {
     clearBufferingWatchdog()
+    stopFocusProbingWatchdog()
     isPausedByInterruption = false
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     log.error('PlaybackService', 'playback-error:', err)
@@ -123,6 +164,7 @@ const registerPlaybackService = async() => {
     log.info('PlaybackService', '[AudioObserver] Other app audio playback ended notification received from native layer!')
     if (!settingState.setting['player.isAutoResumeAfterFocusGain']) {
       log.info('PlaybackService', '[AudioObserver] Auto-resume is disabled in user settings, skipping.')
+      stopFocusProbingWatchdog()
       return
     }
     if (!isPausedByInterruption) {
@@ -134,10 +176,12 @@ const registerPlaybackService = async() => {
     if (elapsed > 120000) {
       log.info('PlaybackService', `[AudioObserver] Interruption elapsed ${elapsed}ms > 120s, cancelling auto resume.`)
       isPausedByInterruption = false
+      stopFocusProbingWatchdog()
       return
     }
 
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
+    stopFocusProbingWatchdog()
     // 预留 250ms 缓冲让蓝牙 A2DP / 硬件音频链路稳定归位，杜绝爆音与扬声器抢跑
     autoResumeTimer = setTimeout(() => {
       autoResumeTimer = null
@@ -175,6 +219,9 @@ const registerPlaybackService = async() => {
         interruptedTime = Date.now()
         global.app_event.playerPause()
         global.app_event.pause()
+        if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
+          startFocusProbingWatchdog()
+        }
       }
       return
     }
@@ -182,6 +229,7 @@ const registerPlaybackService = async() => {
     // 系统焦点主动归还（!paused）
     if (!paused && isPausedByInterruption) {
       isPausedByInterruption = false
+      stopFocusProbingWatchdog()
       if (autoResumeTimer) clearTimeout(autoResumeTimer)
       if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
         log.info('PlaybackService', '[RemoteDuck] Focus gained from system callback, auto resuming playback!')
@@ -256,8 +304,9 @@ const registerPlaybackService = async() => {
   // 彻底消灭后台最后一首歌或单曲切歌时队列判定为结束而坠入 State: 0 彻底停死的 Bug
   TrackPlayer.addEventListener(TPEvent.PlaybackQueueEnded, async info => {
     log.info('PlaybackService', `PlaybackQueueEnded event received: ${JSON.stringify(info)}`)
-    if (global.lx.isPlayedStop) return
-    // 队列走尽且当前仍处于播放意图状态时，立即自愈驱动切换至下一曲
+    // 🛡️ 严格门禁：冷启动、主动停止、无播放意图（playerState.isPlay 为 false）或空队列时，严禁切歌自播！
+    if (global.lx.isPlayedStop || !playerState.isPlay || isEmpty()) return
+    // 队列走尽且当前仍处于播放意图状态时，自愈驱动切换至下一曲
     log.info('PlaybackService', '[SelfHealing] Queue ended in background, driving playNext(true) to keep music streaming...')
     void playNext(true)
   })

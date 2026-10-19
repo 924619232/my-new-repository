@@ -14,7 +14,6 @@ export default memo(() => {
 
   const setAutoResume = (value: boolean) => {
     updateSetting({ 'player.isAutoResumeAfterFocusGain': value })
-    toast(t('setting_play_auto_resume_focus_tip'))
   }
 
   // 只有开启了焦点处理时，自动续播才有意义

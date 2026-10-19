@@ -1,8 +1,12 @@
 {
-  "version": "1.9.45-log",
-  "desc": "fix(player): implement native AudioPlaybackCallback observer, live focus mixing and direct mainland update mirrors (v1.9.45-log code 122)",
+  "version": "1.9.46-log",
+  "desc": "1. 去除设置中混音与音频焦点切换时的冗余 Toast 弹窗；\n2. 增加 PlaybackQueueEnded 播放意图门禁，彻底杜绝冷启动与初始化误自播；\n3. 引入双保险主动探活看门狗（Active Probing Watchdog），外部应用（微信语音/短视频/通话等）发声结束后 100% 自动续播；\n4. 修复未声明变量潜在隐患。",
   "downloadUrl": "https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/lx-music-cjy-release.apk",
   "history": [
+    {
+      "version": "1.9.45-log",
+      "desc": "fix(player): implement native AudioPlaybackCallback observer, live focus mixing and direct mainland update mirrors (v1.9.45-log code 122)"
+    },
     {
       "version": "1.9.29",
       "desc": "1. 搜索结果新增顶部一键【播放全部】功能，单击即播且无缝连播；\n2. 落地原生二级压栈式歌手专页（ArtistDetailScreen），集成返回键与歌手代表作一键播放；\n3. 攻克咪咕原生流对称解密算法引擎，独家首发曲目（如《最难得》）100% 官方直链起播；\n4. 优化端侧直连与信令分离架构。"

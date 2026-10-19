@@ -13,7 +13,6 @@ export default memo(() => {
   const isHandleAudioFocus = useSettingValue('player.isHandleAudioFocus')
   const setHandleAudioFocus = (isHandleAudioFocus: boolean) => {
     updateSetting({ 'player.isHandleAudioFocus': isHandleAudioFocus })
-    toast(t('setting_play_handle_audio_focus_tip'))
   }
 
   return (
