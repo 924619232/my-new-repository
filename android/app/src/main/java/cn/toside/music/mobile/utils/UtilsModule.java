@@ -418,15 +418,34 @@ public class UtilsModule extends ReactContextBaseJavaModule {
     }
   }
 
+  private int getConfigClientUid(AudioPlaybackConfiguration config) {
+    try {
+      java.lang.reflect.Method m = config.getClass().getMethod("getClientUid");
+      Object res = m.invoke(config);
+      if (res instanceof Integer) return (Integer) res;
+    } catch (Throwable ignored) {}
+    return -1;
+  }
+
+  private int getConfigPlayerState(AudioPlaybackConfiguration config) {
+    try {
+      java.lang.reflect.Method m = config.getClass().getMethod("getPlayerState");
+      Object res = m.invoke(config);
+      if (res instanceof Integer) return (Integer) res;
+    } catch (Throwable ignored) {}
+    return 2; // Default to started (PLAYER_STATE_STARTED = 2)
+  }
+
   private void handleAudioPlaybackConfigs(List<AudioPlaybackConfiguration> configs) {
     if (configs == null) return;
     int myUid = android.os.Process.myUid();
     boolean hasOther = false;
     for (AudioPlaybackConfiguration config : configs) {
       try {
-        if (config.getClientUid() != myUid) {
-          int state = config.getPlayerState();
-          if (state == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
+        int uid = getConfigClientUid(config);
+        if (uid > 0 && uid != myUid) {
+          int state = getConfigPlayerState(config);
+          if (state == 2) { // 2 = PLAYER_STATE_STARTED
             hasOther = true;
             break;
           }
@@ -465,9 +484,13 @@ public class UtilsModule extends ReactContextBaseJavaModule {
       if (configs != null) {
         for (AudioPlaybackConfiguration config : configs) {
           try {
-            if (config.getClientUid() != myUid && config.getPlayerState() == AudioPlaybackConfiguration.PLAYER_STATE_STARTED) {
-              hasOther = true;
-              break;
+            int uid = getConfigClientUid(config);
+            if (uid > 0 && uid != myUid) {
+              int state = getConfigPlayerState(config);
+              if (state == 2) {
+                hasOther = true;
+                break;
+              }
             }
           } catch (Throwable ignored) {}
         }

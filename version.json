@@ -1,6 +1,6 @@
 {
   "version": "1.9.45-log",
-  "desc": "fix(ci): strictly enforce zero-APK on VPS, upload solely to China Mobile Cloud Drive & use direct link for version.json (v1.9.44-log code 121)",
+  "desc": "fix(player): implement native AudioPlaybackCallback observer, live focus mixing and direct mainland update mirrors (v1.9.45-log code 122)",
   "downloadUrl": "https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/lx-music-cjy-release.apk",
   "history": [
     {
