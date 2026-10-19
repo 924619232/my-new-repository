@@ -268,8 +268,8 @@ const registerPlaybackService = async() => {
         play()
       }
       return
-    } else if (global.lx.isDucked && !paused) {
-      // ducking 结束且未暂停，恢复原音量
+    } else if (global.lx.isDucked && !ducking) {
+      // ducking 结束，恢复原音量
       log.info('PlaybackService', `[RemoteDuck] Ducking ended! Restoring volume back to ${global.lx.preDuckVolume}`)
       global.lx.isDucked = false
       await TrackPlayer.setVolume(global.lx.preDuckVolume)
@@ -277,9 +277,19 @@ const registerPlaybackService = async() => {
 
     // ── 模式 1：允许混音模式（player.isHandleAudioFocus = false）──
     if (!settingState.setting['player.isHandleAudioFocus']) {
-      if (paused && playerState.isPlay) {
-        log.info('PlaybackService', '[RemoteDuck] Mixing mode active: immediately resuming play() to maintain background mixing!')
-        play()
+      // 若处于 ducking，上方已做 25% 降音并维持混音播放；
+      // 若系统给的是硬性 paused（如来电通话、独占抢占），无法混音，必须真实上报暂停并进入打断等待
+      if (paused && wasPlaying && playerState.playMusicInfo.musicInfo && !global.lx.isPlayedStop && !global.lx.isUserExplicitPaused) {
+        log.info('PlaybackService', '[RemoteDuck] Exclusive focus loss under mixing mode (call/exclusive). Pausing properly.')
+        clearBufferingWatchdog()
+        isPausedByInterruption = true
+        notifyAudioInterruptionState(true)
+        interruptedTime = Date.now()
+        global.app_event.playerPause()
+        global.app_event.pause()
+        if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
+          startFocusProbingWatchdog('RemoteDuck(MixingModePaused)')
+        }
       }
       return
     }

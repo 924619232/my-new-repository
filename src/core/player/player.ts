@@ -1,6 +1,7 @@
 import { isInitialized, initial as playerInitial, isEmpty, setPause, setPlay, setResource, setStop, initTrackInfo } from '@/plugins/player'
 import {
   setStatusText,
+  setIsPlay,
 } from '@/core/player/playStatus'
 import playerState from '@/store/player/state'
 import settingState from '@/store/setting/state'
@@ -622,6 +623,9 @@ export const play = () => {
     if (createGettingUrlId(playerState.playMusicInfo.musicInfo) != global.lx.gettingUrlId) setMusicUrl(playerState.playMusicInfo.musicInfo)
     return
   }
+  setIsPlay(true)
+  global.app_event.play()
+  global.app_event.playerPlaying()
   void setPlay()
 }
 
@@ -633,6 +637,9 @@ export const pause = async() => {
   global.lx.isUserExplicitPaused = true
   setUserExplicitPause(true)
   notifyAudioInterruptionState(false)
+  setIsPlay(false)
+  global.app_event.pause()
+  global.app_event.playerPause()
   await setPause()
 }
 
@@ -644,6 +651,9 @@ export const stop = async() => {
   global.lx.isUserExplicitPaused = true
   setUserExplicitPause(true)
   notifyAudioInterruptionState(false)
+  setIsPlay(false)
+  global.app_event.pause()
+  global.app_event.playerPause()
   await setStop()
   setTimeout(() => {
     global.app_event.stop()
