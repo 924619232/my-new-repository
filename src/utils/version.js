@@ -3,6 +3,7 @@ import { author, name } from '../../package.json'
 import { downloadFile, stopDownload, temporaryDirectoryPath, unlink } from '@/utils/fs'
 import { getSupportedAbis, installApk } from '@/utils/nativeModules/utils'
 import { APP_PROVIDER_NAME } from '@/config/constant'
+import { log } from '@/utils/log'
 
 const abis = [
   'arm64-v8a',
@@ -46,6 +47,7 @@ const request = async(url, retryNum = 0, redirectCount = 0) => {
         const location = resp.headers?.location || resp.headers?.Location
         if (location) {
           const nextUrl = location.startsWith('http') ? location : new URL(location, url).href
+          log.info('Version', `[302 Redirect] Following location -> ${nextUrl}`)
           return request(nextUrl, 0, redirectCount + 1).then(resolve).catch(reject)
         }
       }
@@ -88,6 +90,7 @@ const getNpmPkgInfo = async(url) => {
 
 export const getVersionInfo = async(index = 0) => {
   const [url, source] = address[index]
+  log.info('Version', `Attempting version check from [${index + 1}/${address.length}]: ${url}`)
   let promise
   switch (source) {
     case 'direct':
@@ -100,10 +103,15 @@ export const getVersionInfo = async(index = 0) => {
 
   return promise.then(info => {
     latestVersionInfo = info
+    log.info('Version', `Successfully fetched version info from [${url}]: ${info?.version}`)
     return info
   }).catch(async(err) => {
+    log.warn('Version', `Failed source [${index + 1}/${address.length}] ${url}: ${err?.message || err}`)
     index++
-    if (index >= address.length) throw err
+    if (index >= address.length) {
+      log.error('Version', `All version sources failed! Exhausted ${address.length} mirrors.`)
+      throw err
+    }
     return getVersionInfo(index)
   })
 }

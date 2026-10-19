@@ -195,17 +195,17 @@ const registerPlaybackService = async() => {
     }
 
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
+    autoResumeTimer = null
     stopFocusProbingWatchdog()
-    // 预留 250ms 缓冲让蓝牙 A2DP / 硬件音频链路稳定归位，杜绝爆音与扬声器抢跑
-    autoResumeTimer = setTimeout(() => {
-      autoResumeTimer = null
-      if (isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
-        log.info('PlaybackService', '[AudioObserver] External audio released, smoothly auto-resuming playback!')
-        isPausedByInterruption = false
-        notifyAudioInterruptionState(false)
-        play()
-      }
-    }, 250)
+
+    // 🛡️【0ms 瞬间极速续播】：严禁在切后台/息屏状态下调用 setTimeout！
+    // 手机息屏切后台时，JS setTimeout 会被系统深度节流 10 秒甚至挂起，必须 0ms 同步起播！
+    if (isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
+      log.info('PlaybackService', '[AudioObserver] External audio released, INSTANTLY auto-resuming playback (0ms delay)!')
+      isPausedByInterruption = false
+      notifyAudioInterruptionState(false)
+      play()
+    }
   })
 
   // 🛡️【音频焦点争抢与混音控制 (RemoteDuck) 状态机】：

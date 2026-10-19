@@ -6,6 +6,7 @@ import { getIgnoreVersion, getIgnoreVersionFailTipTime, saveIgnoreVersion, saveI
 import { showVersionModal } from '@/navigation'
 import { Navigation } from 'react-native-navigation'
 import { toast } from '@/utils/tools'
+import { log } from '@/utils/log'
 
 export const showModal = () => {
   if (versionState.showModal) return
@@ -20,34 +21,35 @@ export const hideModal = (componentId: string) => {
 }
 
 export const checkUpdate = async() => {
+  log.info('Version', `Starting version check... Current local version: [${versionState.versionInfo.version}]`)
   versionActions.setVersionInfo({ status: 'checking' })
   let versionInfo: InitState['versionInfo'] = { ...versionState.versionInfo }
   try {
     const { version, desc, history } = await getVersionInfo()
+    log.info('Version', `Fetched remote version successfully: [${version}]`)
     versionInfo.newVersion = {
       version,
       desc,
       history,
     }
-  } catch (err) {
+  } catch (err: any) {
+    log.error('Version', `Failed to fetch remote version info: ${err?.message || err}`)
     versionInfo.newVersion = {
       version: '0.0.0',
       desc: '',
       history: [],
     }
   }
-  // const versionInfo = {
-  //   version: '1.9.0',
-  //   desc: '- 更新xxx\n- 修复xxx123的萨达修复xxx123的萨达修复xxx123的萨达修复xxx123的萨达修复xxx123的萨达',
-  //   history: [{ version: '1.8.0', desc: '- 更新xxx22\n- 修复xxx22' }, { version: '1.7.0', desc: '- 更新xxx22\n- 修复xxx22' }],
-  // }
+
   if (versionInfo.newVersion.version == '0.0.0') {
     versionInfo.isUnknown = true
     versionInfo.status = 'error'
   } else {
     versionInfo.status = 'idle'
     versionInfo.isUnknown = false
-    if (compareVer(versionInfo.version, versionInfo.newVersion.version) != -1) {
+    const cmp = compareVer(versionInfo.version, versionInfo.newVersion.version)
+    log.info('Version', `Version comparison result: compareVer('${versionInfo.version}', '${versionInfo.newVersion.version}') = ${cmp}`)
+    if (cmp != -1) {
       versionInfo.isLatest = true
       versionInfo.newVersion.version = versionInfo.version
     }
@@ -61,12 +63,14 @@ export const checkUpdate = async() => {
       if (Date.now() - time < 7 * 86400000) return
       saveIgnoreVersionFailTipTime(Date.now())
       toast(global.i18n.t('version_tip_unknown'))
-    } else if (versionInfo.newVersion.version != await getIgnoreVersion()) {
-      showModal()
+    } else {
+      const ignored = await getIgnoreVersion()
+      if (versionInfo.newVersion.version != ignored) {
+        log.info('Version', `Newer version available! Triggering showModal()...`)
+        showModal()
+      }
     }
   }
-  // console.log(compareVer(process.versions.app, versionInfo.version))
-  // console.log(process.versions.app, versionInfo.version)
 }
 
 export const downloadUpdate = () => {

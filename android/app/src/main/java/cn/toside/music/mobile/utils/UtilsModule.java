@@ -646,13 +646,33 @@ public class UtilsModule extends ReactContextBaseJavaModule {
             try { interruptionWakeLock.release(); } catch (Throwable ignored) {}
           }
           keepNotificationOngoing(false);
+          triggerNativeMediaPlay();
           utilsEvent.sendEvent("other-app-audio-ended", null);
           return;
         }
+        // 持续加固通知常驻属性，彻底防范被 TrackPlayer 底层异步重建冲刷掉
+        keepNotificationOngoing(true);
         watchdogHandler.postDelayed(this, 800);
       }
     };
     watchdogHandler.postDelayed(watchdogRunnable, 800);
+  }
+
+  private void triggerNativeMediaPlay() {
+    try {
+      Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+      downIntent.setPackage(reactContext.getPackageName());
+      downIntent.putExtra(Intent.EXTRA_KEY_EVENT, new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_MEDIA_PLAY));
+      reactContext.sendBroadcast(downIntent);
+
+      Intent upIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+      upIntent.setPackage(reactContext.getPackageName());
+      upIntent.putExtra(Intent.EXTRA_KEY_EVENT, new android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_MEDIA_PLAY));
+      reactContext.sendBroadcast(upIntent);
+      Log.i("UtilsModule", "[NativeFocus] Triggered native KEYCODE_MEDIA_PLAY broadcast for 0ms instant resume!");
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "triggerNativeMediaPlay error: " + t.getMessage());
+    }
   }
 
   private void stopNativeFocusWatchdog() {
@@ -679,6 +699,10 @@ public class UtilsModule extends ReactContextBaseJavaModule {
       }
       // 2. 增强通知栏常驻属性（保持 FLAG_ONGOING_EVENT，守护 ColorOS 15 流体云胶囊）
       keepNotificationOngoing(true);
+      // 延迟 200ms 再次固化（等底层 pause 动作重建完毕后二次加固）
+      watchdogHandler.postDelayed(() -> {
+        if (isNativePausedByInterruption) keepNotificationOngoing(true);
+      }, 200);
       // 3. 启动原生高精度看门狗（每 800ms 探活一次外部音频）
       startNativeFocusWatchdog();
     } else {
