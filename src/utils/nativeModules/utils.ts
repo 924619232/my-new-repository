@@ -127,3 +127,9 @@ export const onOtherAppAudioStarted = (handler: () => void): () => void => {
 export const isOtherAppPlayingAudio = async(): Promise<boolean> => {
   return UtilsModule.isOtherAppPlayingAudio()
 }
+
+export const notifyAudioInterruptionState = (isInterrupted: boolean) => {
+  try {
+    UtilsModule.notifyAudioInterruptionState(isInterrupted)
+  } catch {}
+}

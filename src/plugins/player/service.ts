@@ -10,7 +10,7 @@ import { pause, play, playNext, playPrev, setMusicUrl } from '@/core/player/play
 import playerState from '@/store/player/state'
 import settingState from '@/store/setting/state'
 import { log } from '@/utils/log'
-import { onOtherAppAudioEnded, isOtherAppPlayingAudio } from '@/utils/nativeModules/utils'
+import { onOtherAppAudioEnded, isOtherAppPlayingAudio, notifyAudioInterruptionState } from '@/utils/nativeModules/utils'
 
 let isInitialized = false
 
@@ -200,6 +200,7 @@ const registerPlaybackService = async() => {
       if (isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
         log.info('PlaybackService', '[AudioObserver] External audio released, smoothly auto-resuming playback!')
         isPausedByInterruption = false
+        notifyAudioInterruptionState(false)
         play()
       }
     }, 250)
@@ -232,6 +233,7 @@ const registerPlaybackService = async() => {
       if (wasPlaying && playerState.playMusicInfo.musicInfo && !global.lx.isPlayedStop) {
         log.info('PlaybackService', `[RemoteDuck] Pausing due to external audio focus interruption (permanent=${permanent}, wasPlaying=${wasPlaying})`)
         isPausedByInterruption = true
+        notifyAudioInterruptionState(true)
         interruptedTime = Date.now()
         global.app_event.playerPause()
         global.app_event.pause()
@@ -246,6 +248,7 @@ const registerPlaybackService = async() => {
     if (!paused && isPausedByInterruption) {
       log.info('PlaybackService', '[RemoteDuck] Focus regained from system callback (!paused). Auto resuming playback!')
       isPausedByInterruption = false
+      notifyAudioInterruptionState(false)
       stopFocusProbingWatchdog('RemoteDuck(FocusRegained)')
       if (autoResumeTimer) clearTimeout(autoResumeTimer)
       if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
@@ -277,6 +280,7 @@ const registerPlaybackService = async() => {
             if (isOther && !isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
               log.info('PlaybackService', '[PlaybackState.Paused] Concurrent external audio playback detected! Auto-activating watchdog...')
               isPausedByInterruption = true
+              notifyAudioInterruptionState(true)
               interruptedTime = Date.now()
               if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
                 startFocusProbingWatchdog('PlaybackState.Paused(ConcurrentExternalAudio)')

@@ -44,7 +44,9 @@ public class UtilsModule extends ReactContextBaseJavaModule {
 
   UtilsEvent utilsEvent;
   private AudioManager.AudioPlaybackCallback audioPlaybackCallback = null;
+  private AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = null;
   private boolean isOtherAppPlaying = false;
+  private boolean isNativePausedByInterruption = false;
 
   UtilsModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -52,6 +54,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
     utilsEvent = new UtilsEvent(reactContext);
     registerScreenBroadcastReceiver();
     registerAudioPlaybackListener();
+    registerNativeAudioFocusListener();
   }
 
   @Override
@@ -512,6 +515,42 @@ public class UtilsModule extends ReactContextBaseJavaModule {
       Log.e("UtilsModule", "isOtherAppPlayingAudio error: " + t.getMessage());
       promise.resolve(false);
     }
+  }
+
+  private void registerNativeAudioFocusListener() {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager == null) return;
+      audioFocusChangeListener = focusChange -> {
+        Log.i("UtilsModule", "[NativeFocus] onAudioFocusChange: " + focusChange);
+        switch (focusChange) {
+          case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+          case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+            isNativePausedByInterruption = true;
+            Log.i("UtilsModule", "[NativeFocus] Transient audio focus loss recorded.");
+            break;
+          case AudioManager.AUDIOFOCUS_GAIN:
+            if (isNativePausedByInterruption) {
+              isNativePausedByInterruption = false;
+              Log.i("UtilsModule", "[NativeFocus] AUDIOFOCUS_GAIN received! Emitting other-app-audio-ended event directly...");
+              utilsEvent.sendEvent("other-app-audio-ended", null);
+            }
+            break;
+          case AudioManager.AUDIOFOCUS_LOSS:
+            isNativePausedByInterruption = false;
+            Log.i("UtilsModule", "[NativeFocus] Permanent audio focus loss.");
+            break;
+        }
+      };
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "registerNativeAudioFocusListener error: " + t.getMessage());
+    }
+  }
+
+  @ReactMethod
+  public void notifyAudioInterruptionState(boolean isInterrupted) {
+    this.isNativePausedByInterruption = isInterrupted;
+    Log.i("UtilsModule", "[NativeFocus] notifyAudioInterruptionState: " + isInterrupted);
   }
 
   @Override

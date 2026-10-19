@@ -15,12 +15,14 @@ const abis = [
 let latestVersionInfo = null
 
 const address = [
+  // 🛡️【国内 100% 免翻墙直连第一梯队】：国内免翻墙镜像源，彻底消灭未开代理时超时与无法更新的死穴
+  ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
+  ['https://testingcf.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
   ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
   ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
-  ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
-  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://gcore.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['http://35.212.238.161/mt_helper/apps/version.json', 'direct'],
 ]
 
 
