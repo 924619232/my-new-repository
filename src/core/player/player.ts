@@ -29,6 +29,7 @@ import { LIST_IDS } from '@/config/constant'
 import { addListMusics, removeListMusics, setActiveList } from '@/core/list'
 import { addDislikeInfo } from '@/core/dislikeList'
 import { log } from '@/utils/log'
+import { setUserExplicitPause, notifyAudioInterruptionState } from '@/utils/nativeModules/utils'
 
 // import { checkMusicFileAvailable } from '@renderer/utils/music'
 
@@ -254,6 +255,8 @@ const handlePlay = async() => {
   }
 
   global.lx.isPlayedStop &&= false
+  global.lx.isUserExplicitPaused = false
+  setUserExplicitPause(false)
   resetRandomNextMusicInfo()
 
   if (global.lx.restorePlayInfo) {
@@ -611,6 +614,9 @@ export const playPrev = async(isAutoToggle = false): Promise<void> => {
  * 恢复播放
  */
 export const play = () => {
+  log.info('PlayerCore', '[UserAction] play() invoked. Unlocking isUserExplicitPaused=false.')
+  global.lx.isUserExplicitPaused = false
+  setUserExplicitPause(false)
   if (playerState.playMusicInfo.musicInfo == null) return
   if (isEmpty()) {
     if (createGettingUrlId(playerState.playMusicInfo.musicInfo) != global.lx.gettingUrlId) setMusicUrl(playerState.playMusicInfo.musicInfo)
@@ -623,6 +629,10 @@ export const play = () => {
  * 暂停播放
  */
 export const pause = async() => {
+  log.info('PlayerCore', '[UserAction] pause() invoked by user. Enforcing isUserExplicitPaused=true lock.')
+  global.lx.isUserExplicitPaused = true
+  setUserExplicitPause(true)
+  notifyAudioInterruptionState(false)
   await setPause()
 }
 
@@ -630,6 +640,10 @@ export const pause = async() => {
  * 停止播放
  */
 export const stop = async() => {
+  log.info('PlayerCore', '[UserAction] stop() invoked by user. Enforcing isUserExplicitPaused=true lock.')
+  global.lx.isUserExplicitPaused = true
+  setUserExplicitPause(true)
+  notifyAudioInterruptionState(false)
   await setStop()
   setTimeout(() => {
     global.app_event.stop()

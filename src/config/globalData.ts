@@ -40,6 +40,11 @@ global.lx = {
   // 是否播放完后退出应用
   isPlayedStop: false,
 
+  // 🛡️ 用户显式主动暂停与 Ducking 混音避让标记
+  isUserExplicitPaused: false,
+  isDucked: false,
+  preDuckVolume: 1,
+
   // prevListPlayIndex: -1,
 
   // syncKeyInfo: {},

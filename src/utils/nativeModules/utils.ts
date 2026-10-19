@@ -133,3 +133,9 @@ export const notifyAudioInterruptionState = (isInterrupted: boolean) => {
     UtilsModule.notifyAudioInterruptionState(isInterrupted)
   } catch {}
 }
+
+export const setUserExplicitPause = (isUserPaused: boolean) => {
+  try {
+    UtilsModule.setUserExplicitPause(isUserPaused)
+  } catch {}
+}

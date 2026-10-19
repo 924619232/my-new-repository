@@ -51,6 +51,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   private AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = null;
   private boolean isOtherAppPlaying = false;
   private boolean isNativePausedByInterruption = false;
+  private volatile boolean isUserExplicitPaused = false;
   private PowerManager.WakeLock interruptionWakeLock = null;
   private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
   private Runnable watchdogRunnable = null;
@@ -546,7 +547,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
             Log.i("UtilsModule", "[NativeFocus] Transient audio focus loss recorded.");
             break;
           case AudioManager.AUDIOFOCUS_GAIN:
-            if (isNativePausedByInterruption) {
+            if (isNativePausedByInterruption && !isUserExplicitPaused) {
               isNativePausedByInterruption = false;
               Log.i("UtilsModule", "[NativeFocus] AUDIOFOCUS_GAIN received! Emitting other-app-audio-ended event directly...");
               utilsEvent.sendEvent("other-app-audio-ended", null);
@@ -626,11 +627,15 @@ public class UtilsModule extends ReactContextBaseJavaModule {
 
   private void startNativeFocusWatchdog() {
     stopNativeFocusWatchdog();
+    if (isUserExplicitPaused) {
+      Log.i("UtilsModule", "[NativeFocusWatchdog] Not starting watchdog because isUserExplicitPaused is true.");
+      return;
+    }
     watchdogRunnable = new Runnable() {
       private int probeCount = 0;
       @Override
       public void run() {
-        if (!isNativePausedByInterruption) return;
+        if (isUserExplicitPaused || !isNativePausedByInterruption) return;
         probeCount++;
         if (probeCount > 50) { // 50 * 800ms = 40s
           Log.i("UtilsModule", "[NativeFocusWatchdog] Watchdog timeout (>40s), stopping.");
@@ -639,7 +644,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
         }
         boolean hasOther = checkAnyOtherAppPlaying();
         Log.i("UtilsModule", "[NativeFocusWatchdog] Probe #" + probeCount + ": hasOtherAudio=" + hasOther);
-        if (!hasOther && isNativePausedByInterruption) {
+        if (!hasOther && isNativePausedByInterruption && !isUserExplicitPaused) {
           Log.i("UtilsModule", "[NativeFocusWatchdog] External audio stopped in background! Emitting resume event NOW!");
           isNativePausedByInterruption = false;
           if (interruptionWakeLock != null && interruptionWakeLock.isHeld()) {
@@ -659,6 +664,10 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   }
 
   private void triggerNativeMediaPlay() {
+    if (isUserExplicitPaused) {
+      Log.i("UtilsModule", "[NativeFocus] triggerNativeMediaPlay BLOCKED because isUserExplicitPaused is true.");
+      return;
+    }
     try {
       Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
       downIntent.setPackage(reactContext.getPackageName());
@@ -683,7 +692,25 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void setUserExplicitPause(boolean isPaused) {
+    this.isUserExplicitPaused = isPaused;
+    Log.i("UtilsModule", "[NativeFocus] setUserExplicitPause: " + isPaused);
+    if (isPaused) {
+      this.isNativePausedByInterruption = false;
+      stopNativeFocusWatchdog();
+      if (interruptionWakeLock != null && interruptionWakeLock.isHeld()) {
+        try { interruptionWakeLock.release(); } catch (Throwable ignored) {}
+      }
+      keepNotificationOngoing(false);
+    }
+  }
+
+  @ReactMethod
   public void notifyAudioInterruptionState(boolean isInterrupted) {
+    if (isInterrupted && isUserExplicitPaused) {
+      Log.i("UtilsModule", "[NativeFocus] notifyAudioInterruptionState(true) ignored because isUserExplicitPaused is true.");
+      return;
+    }
     this.isNativePausedByInterruption = isInterrupted;
     Log.i("UtilsModule", "[NativeFocus] notifyAudioInterruptionState: " + isInterrupted);
 
