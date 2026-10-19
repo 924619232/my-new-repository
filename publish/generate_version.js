@@ -18,6 +18,14 @@ try {
   if (Array.isArray(oldVer.history)) {
     history = oldVer.history
   }
+  if (oldVer.version && oldVer.version !== pkg.version) {
+    if (!history.length || history[0].version !== oldVer.version) {
+      history.unshift({
+        version: oldVer.version,
+        desc: oldVer.desc || '',
+      })
+    }
+  }
 } catch (e) {}
 
 const data = {

@@ -15,6 +15,10 @@ import android.media.AudioPlaybackConfiguration;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -47,11 +51,23 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   private AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = null;
   private boolean isOtherAppPlaying = false;
   private boolean isNativePausedByInterruption = false;
+  private PowerManager.WakeLock interruptionWakeLock = null;
+  private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
+  private Runnable watchdogRunnable = null;
 
   UtilsModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
     utilsEvent = new UtilsEvent(reactContext);
+    try {
+      PowerManager pm = (PowerManager) reactContext.getSystemService(Context.POWER_SERVICE);
+      if (pm != null) {
+        interruptionWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LXMusic:InterruptionWakeLock");
+        interruptionWakeLock.setReferenceCounted(false);
+      }
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "Init WakeLock error: " + t.getMessage());
+    }
     registerScreenBroadcastReceiver();
     registerAudioPlaybackListener();
     registerNativeAudioFocusListener();
@@ -547,15 +563,146 @@ public class UtilsModule extends ReactContextBaseJavaModule {
     }
   }
 
+  private boolean checkAnyOtherAppPlaying() {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager == null) return false;
+      boolean isMusicActive = audioManager.isMusicActive();
+      int mode = audioManager.getMode();
+      boolean isCallActive = (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION);
+      if (isMusicActive || isCallActive) return true;
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        List<AudioPlaybackConfiguration> configs = audioManager.getActivePlaybackConfigurations();
+        if (configs != null && !configs.isEmpty()) {
+          int myUid = android.os.Process.myUid();
+          for (AudioPlaybackConfiguration config : configs) {
+            try {
+              int uid = getConfigClientUid(config);
+              if (uid > 0 && uid != myUid) {
+                int state = getConfigPlayerState(config);
+                if (state == 2) { // 2 = PLAYER_STATE_STARTED
+                  return true;
+                }
+              }
+            } catch (Throwable ignored) {}
+          }
+        }
+      }
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "checkAnyOtherAppPlaying error: " + t.getMessage());
+    }
+    return false;
+  }
+
+  private void keepNotificationOngoing(boolean ongoing) {
+    try {
+      NotificationManager nm = (NotificationManager) reactContext.getSystemService(Context.NOTIFICATION_SERVICE);
+      if (nm == null) return;
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        StatusBarNotification[] sbns = nm.getActiveNotifications();
+        if (sbns != null) {
+          for (StatusBarNotification sbn : sbns) {
+            if (sbn.getId() == 1) { // TrackPlayer notification id is 1
+              Notification n = sbn.getNotification();
+              if (n != null) {
+                if (ongoing) {
+                  n.flags |= (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR);
+                } else {
+                  n.flags &= ~Notification.FLAG_NO_CLEAR;
+                }
+                nm.notify(1, n);
+                Log.i("UtilsModule", "[FluidCloud] Successfully updated notification ongoing=" + ongoing);
+              }
+              break;
+            }
+          }
+        }
+      }
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "keepNotificationOngoing error: " + t.getMessage());
+    }
+  }
+
+  private void startNativeFocusWatchdog() {
+    stopNativeFocusWatchdog();
+    watchdogRunnable = new Runnable() {
+      private int probeCount = 0;
+      @Override
+      public void run() {
+        if (!isNativePausedByInterruption) return;
+        probeCount++;
+        if (probeCount > 50) { // 50 * 800ms = 40s
+          Log.i("UtilsModule", "[NativeFocusWatchdog] Watchdog timeout (>40s), stopping.");
+          notifyAudioInterruptionState(false);
+          return;
+        }
+        boolean hasOther = checkAnyOtherAppPlaying();
+        Log.i("UtilsModule", "[NativeFocusWatchdog] Probe #" + probeCount + ": hasOtherAudio=" + hasOther);
+        if (!hasOther && isNativePausedByInterruption) {
+          Log.i("UtilsModule", "[NativeFocusWatchdog] External audio stopped in background! Emitting resume event NOW!");
+          isNativePausedByInterruption = false;
+          if (interruptionWakeLock != null && interruptionWakeLock.isHeld()) {
+            try { interruptionWakeLock.release(); } catch (Throwable ignored) {}
+          }
+          keepNotificationOngoing(false);
+          utilsEvent.sendEvent("other-app-audio-ended", null);
+          return;
+        }
+        watchdogHandler.postDelayed(this, 800);
+      }
+    };
+    watchdogHandler.postDelayed(watchdogRunnable, 800);
+  }
+
+  private void stopNativeFocusWatchdog() {
+    if (watchdogRunnable != null) {
+      watchdogHandler.removeCallbacks(watchdogRunnable);
+      watchdogRunnable = null;
+    }
+  }
+
   @ReactMethod
   public void notifyAudioInterruptionState(boolean isInterrupted) {
     this.isNativePausedByInterruption = isInterrupted;
     Log.i("UtilsModule", "[NativeFocus] notifyAudioInterruptionState: " + isInterrupted);
+
+    if (isInterrupted) {
+      // 1. 立即获取 WakeLock，保持 CPU 处于活动状态，杜绝 ColorOS 深度休眠 JS 线程与回调
+      if (interruptionWakeLock != null && !interruptionWakeLock.isHeld()) {
+        try {
+          interruptionWakeLock.acquire(60000); // 60 秒安全超时兜底
+          Log.i("UtilsModule", "[NativeFocus] Acquired InterruptionWakeLock (60s timeout)");
+        } catch (Throwable t) {
+          Log.e("UtilsModule", "Acquire WakeLock error: " + t.getMessage());
+        }
+      }
+      // 2. 增强通知栏常驻属性（保持 FLAG_ONGOING_EVENT，守护 ColorOS 15 流体云胶囊）
+      keepNotificationOngoing(true);
+      // 3. 启动原生高精度看门狗（每 800ms 探活一次外部音频）
+      startNativeFocusWatchdog();
+    } else {
+      // 打断恢复，释放 WakeLock，停止原生看门狗
+      stopNativeFocusWatchdog();
+      if (interruptionWakeLock != null && interruptionWakeLock.isHeld()) {
+        try {
+          interruptionWakeLock.release();
+          Log.i("UtilsModule", "[NativeFocus] Released InterruptionWakeLock");
+        } catch (Throwable t) {
+          Log.e("UtilsModule", "Release WakeLock error: " + t.getMessage());
+        }
+      }
+      keepNotificationOngoing(false);
+    }
   }
 
   @Override
   public void onCatalystInstanceDestroy() {
     super.onCatalystInstanceDestroy();
+    stopNativeFocusWatchdog();
+    if (interruptionWakeLock != null && interruptionWakeLock.isHeld()) {
+      try { interruptionWakeLock.release(); } catch (Throwable ignored) {}
+    }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioPlaybackCallback != null) {
       try {
         AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);

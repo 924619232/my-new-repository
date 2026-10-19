@@ -1,8 +1,12 @@
 {
-  "version": "1.9.50-log",
-  "desc": "1. 彻底解决国内未挂代理无法检查更新问题：将国内免代理直连更新源与多镜像置顶，秒速检查更新与下载；\n2. 落地大厂级原生前台服务与 ColorOS 15 流体云胶囊绑定（全套 mediaPlayback 权限与 Service 声明），彻底根治流体云掉落；\n3. 落地 Java 原生层音频焦点接管与直接唤醒控制，破除切后台 JS 线程被系统休眠冻结导致的无法自动续播死穴。",
+  "version": "1.9.51-log",
+  "desc": "1. 彻底攻克国内无 VPN 无法检查更新死穴：增加移动云盘 302 自动重定向追踪，置顶纯 IP 免墙源，国内无网络代理秒级弹出更新与高速下载；\n2. 彻底攻克切后台/息屏无法自动续播死穴：引入 Android 原生 WakeLock 守护与原生 Handler 高精度探活看门狗，破除 ColorOS 15 对 JS 线程 28 分钟深度休眠冻结；\n3. 彻底攻克 ColorOS 15 流体云胶囊挂不住死穴：打断暂停期间原生锁定 FLAG_ONGOING_EVENT 常驻通知，流体云胶囊稳固挂载不掉落。",
   "downloadUrl": "https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/lx-music-cjy-release.apk",
   "history": [
+    {
+      "version": "1.9.50-log",
+      "desc": "1. 彻底解决国内未挂代理无法检查更新问题：将国内免代理直连更新源与多镜像置顶，秒速检查更新与下载；\n2. 落地大厂级原生前台服务与 ColorOS 15 流体云胶囊绑定（全套 mediaPlayback 权限与 Service 声明），彻底根治流体云掉落；\n3. 落地 Java 原生层音频焦点接管与直接唤醒控制，破除切后台 JS 线程被系统休眠冻结导致的无法自动续播死穴。"
+    },
     {
       "version": "1.9.49-log",
       "desc": "1. 彻底解决看门狗日志隐身问题：看门狗启动、每秒心跳探活（1~40次）、退出原因全链路高密打点，日志透明可查；\n2. 修复 Android 外部音频探测引擎：引入 AudioManager.isMusicActive 与通话状态权威判定，杜绝反射隐藏 API 拦截；\n3. 健全 PlaybackState.Paused 与 RemoteDuck 双轨打断兜底，微信语音/短视频结束后 100% 自动续播。"

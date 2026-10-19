@@ -15,27 +15,48 @@ const abis = [
 let latestVersionInfo = null
 
 const address = [
-  // 🛡️【国内 100% 免翻墙直连第一梯队】：国内免翻墙镜像源，彻底消灭未开代理时超时与无法更新的死穴
+  // 🛡️【国内 100% 免翻墙直连双保险】：
+  // 1. 国内直接直连源（无需跳转、无被墙风险）
+  ['http://35.212.238.161/mt_helper/apps/version.json', 'direct'],
+  // 2. 中国移动云盘原生直链（已支持 302 自动重定向追踪）
   ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
+  // 3. 国内可用 jsdelivr 镜像
   ['https://testingcf.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
   ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  // 4. 海外备用源
   ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
   ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
-  ['http://35.212.238.161/mt_helper/apps/version.json', 'direct'],
 ]
 
 
-const request = async(url, retryNum = 0) => {
+const request = async(url, retryNum = 0, redirectCount = 0) => {
   return new Promise((resolve, reject) => {
     httpGet(url, {
-      timeout: 4000,
+      timeout: 5000,
     }, (err, resp, body) => {
-      if (err || resp.statusCode != 200) {
+      if (err) {
         ++retryNum >= 1
-          ? reject(err || new Error(resp.statusMessage || resp.statusCode))
-          : request(url, retryNum).then(resolve).catch(reject)
-      } else resolve(body)
+          ? reject(err)
+          : request(url, retryNum, redirectCount).then(resolve).catch(reject)
+        return
+      }
+
+      // 🛡️ 彻底攻克中国移动云盘/AList/对象存储 301/302 重定向直接报错断链的死穴！
+      if ((resp.statusCode === 301 || resp.statusCode === 302 || resp.statusCode === 307 || resp.statusCode === 308) && redirectCount < 5) {
+        const location = resp.headers?.location || resp.headers?.Location
+        if (location) {
+          const nextUrl = location.startsWith('http') ? location : new URL(location, url).href
+          return request(nextUrl, 0, redirectCount + 1).then(resolve).catch(reject)
+        }
+      }
+
+      if (resp.statusCode != 200) {
+        ++retryNum >= 1
+          ? reject(new Error(resp.statusMessage || String(resp.statusCode)))
+          : request(url, retryNum, redirectCount).then(resolve).catch(reject)
+      } else {
+        resolve(body)
+      }
     })
   })
 }

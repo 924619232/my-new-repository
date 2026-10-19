@@ -119,6 +119,7 @@ const registerPlaybackService = async() => {
   console.log('reg services...')
   TrackPlayer.addEventListener(TPEvent.RemotePlay, () => {
     isPausedByInterruption = false
+    notifyAudioInterruptionState(false)
     stopFocusProbingWatchdog()
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     play()
@@ -128,6 +129,7 @@ const registerPlaybackService = async() => {
     clearBufferingWatchdog()
     stopFocusProbingWatchdog()
     isPausedByInterruption = false
+    notifyAudioInterruptionState(false)
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
     void pause()
   })
