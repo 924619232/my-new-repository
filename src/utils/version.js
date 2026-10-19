@@ -15,12 +15,12 @@ const abis = [
 let latestVersionInfo = null
 
 const address = [
-  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://gcore.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
-  ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
-  ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
   ['https://music.cjy.qzz.io/apps/version.json', 'direct'],
+  ['https://pan.cjy.qzz.io/d/local/apps/version.json', 'direct'],
+  ['https://pan.cjy.qzz.io/d/%E7%A7%BB%E5%8A%A8%E4%BA%91%E7%9B%98/apps/version.json', 'direct'],
+  ['https://fastly.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://gcore.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
+  ['https://cdn.jsdelivr.net/gh/924619232/my-new-repository@main/version.json', 'direct'],
 ]
 
 
@@ -39,9 +39,18 @@ const request = async(url, retryNum = 0) => {
 }
 
 const getDirectInfo = async(url) => {
-  return request(url).then(info => {
-    if (info.version == null) throw new Error('failed')
-    return info
+  const cacheBusterUrl = url.includes('?') ? `${url}&_t=${Date.now()}` : `${url}?_t=${Date.now()}`
+  return request(cacheBusterUrl).then(info => {
+    let parsedInfo = info
+    if (typeof parsedInfo === 'string') {
+      try {
+        parsedInfo = JSON.parse(parsedInfo)
+      } catch (e) {
+        throw new Error('failed')
+      }
+    }
+    if (!parsedInfo || parsedInfo.version == null) throw new Error('failed')
+    return parsedInfo
   })
 }
 
