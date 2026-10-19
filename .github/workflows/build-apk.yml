@@ -103,24 +103,7 @@ jobs:
             -d "{\"username\":\"$OPENLIST_USER\",\"password\":\"$OPENLIST_PASS\"}" | jq -r '.data.token')
 
           if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
-            echo "1. Uploading to /local/apps/ on OpenList for instant access..."
-            ENCODED_LOCAL=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/local/apps/' + '$APK_NAME'))")
-            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
-              -H "Authorization: $TOKEN" \
-              -H "File-Path: $ENCODED_LOCAL" \
-              -H "User-Agent: Mozilla/5.0" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$APK_PATH" || echo "Local main upload notice"
-
-            ENCODED_LOCAL_VER=$(python3 -c "import urllib.parse; print(urllib.parse.quote('/local/apps/' + '$VERSIONED_APK'))")
-            curl -s -X PUT "$OPENLIST_URL/api/fs/put" \
-              -H "Authorization: $TOKEN" \
-              -H "File-Path: $ENCODED_LOCAL_VER" \
-              -H "User-Agent: Mozilla/5.0" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$APK_PATH" || echo "Local versioned upload notice"
-
-            echo "1.1 Generating and deploying version.json for in-app online updates..."
+            echo "1. Generating and deploying version.json for in-app online updates..."
             export APK_NAME="$APK_NAME"
             node publish/generate_version.js
 
@@ -132,7 +115,7 @@ jobs:
               -H "Content-Type: application/json" \
               --data-binary @"version.json" || echo "Local version.json upload notice"
 
-            echo "2. Attempting upload to /移动云盘/apps/..."
+            echo "2. Uploading APK exclusively to China Mobile Cloud Drive (/移动云盘/apps/)..."
             curl -s -X POST "$OPENLIST_URL/api/fs/remove" \
               -H "Authorization: $TOKEN" \
               -H "Content-Type: application/json" \
