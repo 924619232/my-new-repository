@@ -21,37 +21,48 @@ let lastPlayingTime = 0
 let autoResumeTimer: NodeJS.Timeout | null = null
 let focusProbingTimer: NodeJS.Timeout | null = null
 
-const stopFocusProbingWatchdog = () => {
+const stopFocusProbingWatchdog = (reason: string = 'Normal') => {
   if (focusProbingTimer) {
     clearInterval(focusProbingTimer)
     focusProbingTimer = null
+    log.info('PlaybackService', `[FocusWatchdog] Watchdog stopped. Reason: ${reason}`)
   }
 }
 
-const startFocusProbingWatchdog = () => {
-  stopFocusProbingWatchdog()
+const startFocusProbingWatchdog = (triggerSource: string) => {
+  stopFocusProbingWatchdog('Restarting')
   let probeCount = 0
-  // 每 1.2 秒主动探活一次是否有其他 App 正在播放音频，最高探活 30 次（约 36 秒）
+  const maxProbes = 40 // 40 次 * 1000ms = 40 秒
+  log.info('PlaybackService', `[FocusWatchdog] Watchdog STARTED! Trigger: [${triggerSource}], MaxProbes: ${maxProbes}, Interval: 1000ms`)
+
   focusProbingTimer = setInterval(async() => {
     probeCount++
-    if (probeCount > 30 || !isPausedByInterruption) {
-      stopFocusProbingWatchdog()
+    if (!isPausedByInterruption) {
+      stopFocusProbingWatchdog(`Interruption flag cleared (Probe #${probeCount})`)
+      return
+    }
+    if (probeCount > maxProbes) {
+      stopFocusProbingWatchdog(`Timeout reached (>40s, count=${probeCount})`)
+      isPausedByInterruption = false
       return
     }
     if (!settingState.setting['player.isAutoResumeAfterFocusGain']) {
-      stopFocusProbingWatchdog()
+      stopFocusProbingWatchdog('Auto-resume disabled by user settings')
       return
     }
     try {
       const isOtherPlaying = await isOtherAppPlayingAudio()
+      log.info('PlaybackService', `[FocusWatchdog] Heartbeat Probe #${probeCount}/${maxProbes}: isOtherPlaying=${isOtherPlaying}, isPlay=${playerState.isPlay}`)
       if (!isOtherPlaying && isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
-        log.info('PlaybackService', '[FocusWatchdog] External audio stopped (detected via active probing)! Auto resuming...')
-        stopFocusProbingWatchdog()
+        log.info('PlaybackService', `[FocusWatchdog] External audio stopped (confirmed at Probe #${probeCount})! Auto resuming playback NOW!`)
+        stopFocusProbingWatchdog('ResumedSuccessfully')
         isPausedByInterruption = false
         play()
       }
-    } catch (e) {}
-  }, 1200)
+    } catch (e: any) {
+      log.warn('PlaybackService', `[FocusWatchdog] Heartbeat Probe #${probeCount} error: ${e?.message}`)
+    }
+  }, 1000)
 }
 
 // ── 缓冲挂死看门狗与自动自愈机制 (针对车机源防盗链 410 / State 6 缓冲卡死) ──
@@ -201,7 +212,8 @@ const registerPlaybackService = async() => {
   //    外部应用发声（微信语音、刷视频、接打电话），记录被打断状态，优雅暂停；
   //    待外部应用播放完毕，由原生声学监听引擎（或系统焦点回调）100% 自动唤醒续播！
   TrackPlayer.addEventListener(TPEvent.RemoteDuck, async({ permanent, paused, ducking }) => {
-    log.info('PlaybackService', `[RemoteDuck] Audio focus event: permanent=${permanent}, paused=${paused}, ducking=${ducking}`)
+    const wasPlaying = playerState.isPlay || (Date.now() - lastPlayingTime < 3000)
+    log.info('PlaybackService', `[RemoteDuck] Audio focus event: permanent=${permanent}, paused=${paused}, ducking=${ducking}, wasPlaying=${wasPlaying}, currentIsPlay=${playerState.isPlay}`)
     
     // 若用户关闭了焦点处理（允许混音）：立即反手起播维持背景混音
     if (!settingState.setting['player.isHandleAudioFocus']) {
@@ -217,7 +229,6 @@ const registerPlaybackService = async() => {
       // 🛡️ 破除 Android ROM 时序死锁：
       // 在 ColorOS/MIUI 上系统往往先触发 PlaybackState.Paused 将 playerState.isPlay 改为 false，随后才抛出 RemoteDuck
       // 因此只要当前处于播放意图，或者过去 3000ms 内刚刚处于 Playing 状态，一律判定为外部发声打断！
-      const wasPlaying = playerState.isPlay || (Date.now() - lastPlayingTime < 3000)
       if (wasPlaying && playerState.playMusicInfo.musicInfo && !global.lx.isPlayedStop) {
         log.info('PlaybackService', `[RemoteDuck] Pausing due to external audio focus interruption (permanent=${permanent}, wasPlaying=${wasPlaying})`)
         isPausedByInterruption = true
@@ -225,7 +236,7 @@ const registerPlaybackService = async() => {
         global.app_event.playerPause()
         global.app_event.pause()
         if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
-          startFocusProbingWatchdog()
+          startFocusProbingWatchdog('RemoteDuck(paused=true)')
         }
       }
       return
@@ -233,11 +244,11 @@ const registerPlaybackService = async() => {
 
     // 系统焦点主动归还（!paused）
     if (!paused && isPausedByInterruption) {
+      log.info('PlaybackService', '[RemoteDuck] Focus regained from system callback (!paused). Auto resuming playback!')
       isPausedByInterruption = false
-      stopFocusProbingWatchdog()
+      stopFocusProbingWatchdog('RemoteDuck(FocusRegained)')
       if (autoResumeTimer) clearTimeout(autoResumeTimer)
       if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
-        log.info('PlaybackService', '[RemoteDuck] Focus gained from system callback, auto resuming playback!')
         play()
       }
     }
@@ -252,10 +263,27 @@ const registerPlaybackService = async() => {
         break
       case TPState.Ready:
       case TPState.Stopped:
+        clearBufferingWatchdog()
+        break
       case TPState.Paused:
         clearBufferingWatchdog()
         global.app_event.playerPause()
         global.app_event.pause()
+        // 🛡️ 智能打断探活兜底：
+        // 某些国产系统在外部应用打断时直接暂停了播放器，可能延迟或不分发 RemoteDuck 事件
+        // 如果当前并非用户手动按下了停止，且过去 3500ms 内处于 Playing 状态，且检测到外部应用正在播放，自动激活打断看门狗！
+        if (Date.now() - lastPlayingTime < 3500 && !isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
+          void isOtherAppPlayingAudio().then(isOther => {
+            if (isOther && !isPausedByInterruption && !global.lx.isPlayedStop && playerState.playMusicInfo.musicInfo) {
+              log.info('PlaybackService', '[PlaybackState.Paused] Concurrent external audio playback detected! Auto-activating watchdog...')
+              isPausedByInterruption = true
+              interruptedTime = Date.now()
+              if (settingState.setting['player.isAutoResumeAfterFocusGain']) {
+                startFocusProbingWatchdog('PlaybackState.Paused(ConcurrentExternalAudio)')
+              }
+            }
+          })
+        }
         break
       case TPState.Playing:
         lastPlayingTime = Date.now()

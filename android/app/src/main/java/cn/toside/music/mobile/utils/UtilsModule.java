@@ -437,57 +437,22 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   }
 
   private void handleAudioPlaybackConfigs(List<AudioPlaybackConfiguration> configs) {
-    if (configs == null) return;
-    int myUid = android.os.Process.myUid();
-    boolean hasOther = false;
-    for (AudioPlaybackConfiguration config : configs) {
-      try {
-        int uid = getConfigClientUid(config);
-        if (uid > 0 && uid != myUid) {
-          int state = getConfigPlayerState(config);
-          if (state == 2) { // 2 = PLAYER_STATE_STARTED
-            hasOther = true;
-            break;
-          }
-        }
-      } catch (Throwable ignored) {
-      }
-    }
-
-    if (hasOther != isOtherAppPlaying) {
-      isOtherAppPlaying = hasOther;
-      if (!isOtherAppPlaying) {
-        Log.i("UtilsModule", "Other app audio ended! Emitting other-app-audio-ended event...");
-        utilsEvent.sendEvent("other-app-audio-ended", null);
-      } else {
-        Log.i("UtilsModule", "Other app audio started! Emitting other-app-audio-started event...");
-        utilsEvent.sendEvent("other-app-audio-started", null);
-      }
-    }
-  }
-
-  @ReactMethod
-  public void isOtherAppPlayingAudio(Promise promise) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-      promise.resolve(false);
-      return;
-    }
     try {
       AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
-      if (audioManager == null) {
-        promise.resolve(false);
-        return;
-      }
-      List<AudioPlaybackConfiguration> configs = audioManager.getActivePlaybackConfigurations();
-      int myUid = android.os.Process.myUid();
-      boolean hasOther = false;
-      if (configs != null) {
+      if (audioManager == null) return;
+      boolean isMusicActive = audioManager.isMusicActive();
+      int mode = audioManager.getMode();
+      boolean isCallActive = (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION);
+      boolean hasOther = isMusicActive || isCallActive;
+
+      if (configs != null && !configs.isEmpty()) {
+        int myUid = android.os.Process.myUid();
         for (AudioPlaybackConfiguration config : configs) {
           try {
             int uid = getConfigClientUid(config);
             if (uid > 0 && uid != myUid) {
               int state = getConfigPlayerState(config);
-              if (state == 2) {
+              if (state == 2) { // 2 = PLAYER_STATE_STARTED
                 hasOther = true;
                 break;
               }
@@ -495,8 +460,56 @@ public class UtilsModule extends ReactContextBaseJavaModule {
           } catch (Throwable ignored) {}
         }
       }
+
+      if (hasOther != isOtherAppPlaying) {
+        isOtherAppPlaying = hasOther;
+        if (!isOtherAppPlaying) {
+          Log.i("UtilsModule", "Other app audio ended! Emitting other-app-audio-ended event...");
+          utilsEvent.sendEvent("other-app-audio-ended", null);
+        } else {
+          Log.i("UtilsModule", "Other app audio started! Emitting other-app-audio-started event...");
+          utilsEvent.sendEvent("other-app-audio-started", null);
+        }
+      }
+    } catch (Throwable t) {
+      Log.e("UtilsModule", "handleAudioPlaybackConfigs error: " + t.getMessage());
+    }
+  }
+
+  @ReactMethod
+  public void isOtherAppPlayingAudio(Promise promise) {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager == null) {
+        promise.resolve(false);
+        return;
+      }
+      boolean isMusicActive = audioManager.isMusicActive();
+      int mode = audioManager.getMode();
+      boolean isCallActive = (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION);
+      boolean hasOther = isMusicActive || isCallActive;
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        List<AudioPlaybackConfiguration> configs = audioManager.getActivePlaybackConfigurations();
+        if (configs != null && !configs.isEmpty()) {
+          int myUid = android.os.Process.myUid();
+          for (AudioPlaybackConfiguration config : configs) {
+            try {
+              int uid = getConfigClientUid(config);
+              if (uid > 0 && uid != myUid) {
+                int state = getConfigPlayerState(config);
+                if (state == 2) {
+                  hasOther = true;
+                  break;
+                }
+              }
+            } catch (Throwable ignored) {}
+          }
+        }
+      }
       promise.resolve(hasOther);
     } catch (Throwable t) {
+      Log.e("UtilsModule", "isOtherAppPlayingAudio error: " + t.getMessage());
       promise.resolve(false);
     }
   }
