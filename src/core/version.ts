@@ -49,6 +49,7 @@ export const checkUpdate = async() => {
     versionInfo.isUnknown = false
     if (compareVer(versionInfo.version, versionInfo.newVersion.version) != -1) {
       versionInfo.isLatest = true
+      versionInfo.newVersion.version = versionInfo.version
     }
   }
 

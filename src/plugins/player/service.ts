@@ -17,6 +17,7 @@ let isInitialized = false
 // ── 🛡️ 音频打断与外部应用发声结束自动续播状态机 (微信语音/短视频/游戏/导航) ──
 let isPausedByInterruption = false
 let interruptedTime = 0
+let lastPlayingTime = 0
 let autoResumeTimer: NodeJS.Timeout | null = null
 let focusProbingTimer: NodeJS.Timeout | null = null
 
@@ -213,8 +214,12 @@ const registerPlaybackService = async() => {
 
     if (paused) {
       clearBufferingWatchdog()
-      if (playerState.isPlay) {
-        log.info('PlaybackService', `[RemoteDuck] Pausing due to external audio focus interruption (permanent=${permanent})`)
+      // 🛡️ 破除 Android ROM 时序死锁：
+      // 在 ColorOS/MIUI 上系统往往先触发 PlaybackState.Paused 将 playerState.isPlay 改为 false，随后才抛出 RemoteDuck
+      // 因此只要当前处于播放意图，或者过去 3000ms 内刚刚处于 Playing 状态，一律判定为外部发声打断！
+      const wasPlaying = playerState.isPlay || (Date.now() - lastPlayingTime < 3000)
+      if (wasPlaying && playerState.playMusicInfo.musicInfo && !global.lx.isPlayedStop) {
+        log.info('PlaybackService', `[RemoteDuck] Pausing due to external audio focus interruption (permanent=${permanent}, wasPlaying=${wasPlaying})`)
         isPausedByInterruption = true
         interruptedTime = Date.now()
         global.app_event.playerPause()
@@ -253,6 +258,7 @@ const registerPlaybackService = async() => {
         global.app_event.pause()
         break
       case TPState.Playing:
+        lastPlayingTime = Date.now()
         clearBufferingWatchdog()
         bufferingRetryCount = 0
         global.app_event.playerPlaying()
